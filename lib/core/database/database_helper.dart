@@ -47,6 +47,31 @@ class DatabaseHelper {
         created_at TEXT NOT NULL
       )
     ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS users (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT,
+        password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    try {
+      final currency = await db.query('app_settings', where: 'key = ?', whereArgs: ['currency_symbol']);
+      if (currency.isEmpty) {
+        await db.insert('app_settings', {'key': 'currency_symbol', 'value': '₹'});
+        await db.insert('app_settings', {'key': 'reminder_time_hour', 'value': '9'});
+        await db.insert('app_settings', {'key': 'reminder_time_minute', 'value': '0'});
+        await db.insert('app_settings', {'key': 'notifications_enabled', 'value': '1'});
+      }
+    } catch (_) {}
   }
 
   Future<Database> _initDB(String filePath) async {
@@ -155,7 +180,7 @@ class DatabaseHelper {
       )
     ''');
 
-    // 6. App Settings Table
+    // 6. Investments Table
     await db.execute('''
       CREATE TABLE IF NOT EXISTS investments (
         id TEXT PRIMARY KEY,
@@ -173,9 +198,12 @@ class DatabaseHelper {
         notes TEXT,
         status TEXT NOT NULL DEFAULT 'ACTIVE',
         created_at TEXT NOT NULL
-      );
+      )
+    ''');
 
-      CREATE TABLE app_settings (
+    // 7. App Settings Table
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS app_settings (
         key TEXT PRIMARY KEY,
         value TEXT NOT NULL
       )

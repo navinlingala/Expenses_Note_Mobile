@@ -25,6 +25,16 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  
+  Future<void> _handleSkip() async {
+    final auth = context.read<AuthProvider>();
+    auth.continueAsGuest();
+    final user = auth.currentUser!;
+    await context.read<LoanProvider>().loadLoans(user.id);
+    if (!mounted) return;
+    await context.read<TransactionProvider>().loadTransactions(user.id);
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -57,6 +67,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Top Row with Skip button
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton.icon(
+                        onPressed: _handleSkip,
+                        style: TextButton.styleFrom(
+                          foregroundColor: const Color(0xFF6366F1),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide(color: const Color(0xFF6366F1).withAlpha(50)),
+                          ),
+                        ),
+                        icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                        label: const Text(
+                          'Skip',
+                          style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
                   // App Icon & Hero Header
                   Center(
                     child: Container(
@@ -95,7 +128,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Sign in to access your personal money reminders, loans, and EMIs.',
+                    'Sign in to access your expenses note, loans, and EMIs.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,

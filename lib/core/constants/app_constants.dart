@@ -1,5 +1,5 @@
 ﻿class AppConstants {
-  static const String appName = 'Money Reminder & EMI Tracker';
+  static const String appName = 'Expenses Note';
   static const String defaultCurrency = '₹';
 
   // Transaction Types

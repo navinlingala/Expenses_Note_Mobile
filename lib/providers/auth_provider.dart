@@ -11,9 +11,11 @@ class AuthProvider with ChangeNotifier {
   bool _isInitialized = false;
   bool _isLoading = false;
   String? _errorMessage;
+  bool _isGuest = false;
 
   UserModel? get currentUser => _currentUser;
-  bool get isAuthenticated => _currentUser != null;
+  bool get isAuthenticated => _currentUser != null || _isGuest;
+  bool get isGuest => _isGuest;
   bool get isInitialized => _isInitialized;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -145,6 +147,21 @@ class AuthProvider with ChangeNotifier {
   Future<void> logout() async {
     await _db.clearActiveSession();
     _currentUser = null;
+    _isGuest = false;
+    _errorMessage = null;
+    notifyListeners();
+  }
+
+
+  void continueAsGuest() {
+    _isGuest = true;
+    _currentUser = UserModel(
+      id: 'guest_user',
+      name: 'Guest User',
+      email: 'guest@expensesnote.app',
+      phone: null,
+      createdAt: DateTime.now(),
+    );
     _errorMessage = null;
     notifyListeners();
   }

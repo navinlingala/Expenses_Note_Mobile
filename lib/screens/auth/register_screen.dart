@@ -30,6 +30,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
+  
+  Future<void> _handleSkip() async {
+    final auth = context.read<AuthProvider>();
+    auth.continueAsGuest();
+    final user = auth.currentUser!;
+    await context.read<LoanProvider>().loadLoans(user.id);
+    if (!mounted) return;
+    await context.read<TransactionProvider>().loadTransactions(user.id);
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -58,6 +70,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Create Account'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: TextButton.icon(
+              onPressed: _handleSkip,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6366F1),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(color: const Color(0xFF6366F1).withAlpha(50)),
+                ),
+              ),
+              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+              label: const Text(
+                'Skip',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -68,7 +101,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'Join Money Reminder',
+                  'Join Expenses Note',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
