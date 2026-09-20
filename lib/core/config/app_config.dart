@@ -21,6 +21,9 @@ class AppConfig {
   // Backend Endpoints
   // -------------------------------------------------------------
   /// Production Backend (e.g. Render / Railway cloud deployment connected to Neon DB)
+  static const String liveBackendUrl = 'https://expenses-note-backend.onrender.com';
+  
+  /// Production Backend (e.g. Render / Railway cloud deployment connected to Neon DB)
   static const String liveBackendUrl = 'https://money-reminder-backend.onrender.com';
 
   /// Development / Localhost Endpoints (for Chrome web & Android emulator)
