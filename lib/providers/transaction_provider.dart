@@ -174,8 +174,12 @@ class TransactionProvider with ChangeNotifier {
     );
 
     await _db.insertTransaction(newTx);
-    await _api.syncTransaction(newTx);
-    await _scheduleTransactionReminder(newTx);
+    try {
+      await _api.syncTransaction(newTx);
+    } catch (_) {}
+    try {
+      await _scheduleTransactionReminder(newTx);
+    } catch (_) {}
     await loadTransactions(userId);
   }
 

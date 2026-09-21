@@ -92,8 +92,12 @@ class LoanProvider with ChangeNotifier {
     );
 
     await _db.insertLoan(newLoan);
-    await _api.syncLoan(newLoan);
-    await _scheduleLoanReminders(newLoan);
+    try {
+      await _api.syncLoan(newLoan);
+    } catch (_) {}
+    try {
+      await _scheduleLoanReminders(newLoan);
+    } catch (_) {}
     await loadLoans(userId);
   }
 
