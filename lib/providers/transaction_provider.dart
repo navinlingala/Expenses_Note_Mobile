@@ -129,8 +129,14 @@ class TransactionProvider with ChangeNotifier {
       _transactions = await _db.getAllTransactions(userId: userId);
       try {
         final remote = await _api.fetchTransactions(userId);
-        await _db.syncReplaceTransactions(userId, remote);
-        _transactions = await _db.getAllTransactions(userId: userId);
+        if (remote.isNotEmpty) {
+          await _db.syncReplaceTransactions(userId, remote);
+          _transactions = await _db.getAllTransactions(userId: userId);
+        } else if (_transactions.isNotEmpty) {
+          for (final tx in _transactions) {
+            await _api.syncTransaction(tx);
+          }
+        }
       } catch (_) {}
     } finally {
       _isLoading = false;

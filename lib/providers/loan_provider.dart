@@ -42,8 +42,15 @@ class LoanProvider with ChangeNotifier {
       _loans = await _db.getAllLoans(userId: userId);
       try {
         final remote = await _api.fetchLoans(userId);
-        await _db.syncReplaceLoans(userId, remote);
-        _loans = await _db.getAllLoans(userId: userId);
+        if (remote.isNotEmpty) {
+          await _db.syncReplaceLoans(userId, remote);
+          _loans = await _db.getAllLoans(userId: userId);
+        } else if (_loans.isNotEmpty) {
+          // If remote is empty but local has items, push local items to server
+          for (final loan in _loans) {
+            await _api.syncLoan(loan);
+          }
+        }
       } catch (_) {}
     } finally {
       _isLoading = false;

@@ -4,15 +4,14 @@ enum Environment { dev, prod }
 
 class AppConfig {
   /// Current active environment.
-  /// Change to `Environment.prod` when compiling for release / phone testing with Neon DB & Cloud backend.
-  /// Or pass `--dart-define=ENV=prod` during flutter build.
-  static const String _envString = String.fromEnvironment('ENV', defaultValue: 'dev');
+  /// Defaults to prod for live backend with Neon DB, or pass `--dart-define=ENV=dev` for localhost testing.
+  static const String _envString = String.fromEnvironment('ENV', defaultValue: 'prod');
 
   static Environment get currentEnvironment {
-    if (_envString.toLowerCase() == 'prod') {
-      return Environment.prod;
+    if (_envString.toLowerCase() == 'dev') {
+      return Environment.dev;
     }
-    return Environment.dev;
+    return Environment.prod;
   }
 
   static bool get isProduction => currentEnvironment == Environment.prod;
@@ -20,11 +19,10 @@ class AppConfig {
   // -------------------------------------------------------------
   // Backend Endpoints
   // -------------------------------------------------------------
-  /// Production Backend (e.g. Render / Railway cloud deployment connected to Neon DB)
-  static const String liveBackendUrl = 'https://expenses-note-backend.onrender.com';
-  
-  /// Production Backend (e.g. Render / Railway cloud deployment connected to Neon DB)
-  static const String liveBackendUrl = 'https://money-reminder-backend.onrender.com';
+  /// Production Backend: Connected to your Local Host on Wi-Fi IP (192.168.55.107:8080)
+  /// Running in PROD profile against your Neon PostgreSQL Database!
+  /// When deployed on Render, you can switch this to 'https://expenses-note-backend.onrender.com'
+  static const String liveBackendUrl = 'http://192.168.55.107:8080';
 
   /// Development / Localhost Endpoints (for Chrome web & Android emulator)
   static const String localWebUrl = 'http://localhost:8080';
