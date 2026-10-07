@@ -1,11 +1,16 @@
+import 'calculators/calculators_screen.dart';
+import 'income/family_income_screen.dart';
+import '../providers/income_provider.dart';
 import '../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/loan_provider.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/investment_provider.dart';
+import '../widgets/app_drawer.dart';
 import 'dashboard/dashboard_screen.dart';
 import 'loans/loan_list_screen.dart';
+import 'dues/dues_screen.dart';
 import 'investments/investment_list_screen.dart';
 import 'expenses/daily_expenses_screen.dart';
 import 'transactions/transaction_list_screen.dart';
@@ -19,15 +24,60 @@ class HomeNavigationScreen extends StatefulWidget {
 }
 
 class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    DashboardScreen(),
-    LoanListScreen(),
-    InvestmentListScreen(),
-    DailyExpensesScreen(),
-    TransactionListScreen(),
-    SettingsScreen(),
+  void _openDrawer() {
+    _scaffoldKey.currentState?.openDrawer();
+  }
+
+  Future<bool> _showExitConfirmation(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(Icons.exit_to_app_rounded, color: Color(0xFFF43F5E)),
+            SizedBox(width: 8),
+            Text('Exit Expenses Note?'),
+          ],
+        ),
+        content: const Text('Are you sure you want to close the application?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No, Stay'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF43F5E),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, Exit'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  void _navigateToIndex(int idx) {
+    setState(() => _currentIndex = idx);
+  }
+
+  late final List<Widget> _screens = [
+    DashboardScreen(onOpenDrawer: _openDrawer),
+    LoanListScreen(onOpenDrawer: _openDrawer),
+    DuesScreen(onOpenDrawer: _openDrawer),
+    InvestmentListScreen(onOpenDrawer: _openDrawer),
+    const DailyExpensesScreen(),
+    const TransactionListScreen(),
+    const SettingsScreen(),
+    FamilyIncomeScreen(onOpenDrawer: _openDrawer),
+    CalculatorsScreen(onOpenDrawer: _openDrawer),
   ];
 
   @override
@@ -39,6 +89,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
         context.read<LoanProvider>().loadLoans(uid);
         context.read<TransactionProvider>().loadTransactions(uid);
         context.read<InvestmentProvider>().loadInvestments(uid);
+        context.read<IncomeProvider>().loadIncomes(uid);
       }
     });
   }
@@ -52,10 +103,37 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
 
     final pendingDuesCount = txProv.pendingReceivables.length + txProv.pendingPayables.length;
     final activeLoansCount = loanProv.activeLoans.length;
-    final totalLoansDuesCount = activeLoansCount + pendingDuesCount;
     final activeInvestmentsCount = invProv.investments.length;
 
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        // If drawer is open, close drawer
+        if (_scaffoldKey.currentState?.isDrawerOpen ?? false) {
+          _scaffoldKey.currentState?.closeDrawer();
+          return;
+        }
+
+        // If user is on a sub-screen (not Dashboard), back swipe goes to Dashboard first
+        if (_currentIndex != 0) {
+          setState(() => _currentIndex = 0);
+          return;
+        }
+
+        // If already on Dashboard, prompt confirmation before exiting
+        final shouldExit = await _showExitConfirmation(context);
+        if (shouldExit && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        key: _scaffoldKey,
+      drawer: AppDrawer(
+        selectedIndex: _currentIndex,
+        onItemSelected: _navigateToIndex,
+      ),
       body: IndexedStack(
         index: _currentIndex,
         children: _screens,
@@ -96,7 +174,7 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
             }),
           ),
           child: NavigationBar(
-            selectedIndex: _currentIndex,
+            selectedIndex: _currentIndex > 4 ? 0 : _currentIndex,
             onDestinationSelected: (idx) => setState(() => _currentIndex = idx),
             backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
             destinations: [
@@ -107,16 +185,29 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
               ),
               NavigationDestination(
                 icon: Badge(
-                  isLabelVisible: totalLoansDuesCount > 0,
-                  label: Text('$totalLoansDuesCount'),
+                  isLabelVisible: activeLoansCount > 0,
+                  label: Text('$activeLoansCount'),
                   child: const Icon(Icons.account_balance_outlined),
                 ),
                 selectedIcon: Badge(
-                  isLabelVisible: totalLoansDuesCount > 0,
-                  label: Text('$totalLoansDuesCount'),
+                  isLabelVisible: activeLoansCount > 0,
+                  label: Text('$activeLoansCount'),
                   child: const Icon(Icons.account_balance_rounded),
                 ),
-                label: 'Loans & Dues',
+                label: 'Loans',
+              ),
+              NavigationDestination(
+                icon: Badge(
+                  isLabelVisible: pendingDuesCount > 0,
+                  label: Text('$pendingDuesCount'),
+                  child: const Icon(Icons.people_alt_outlined),
+                ),
+                selectedIcon: Badge(
+                  isLabelVisible: pendingDuesCount > 0,
+                  label: Text('$pendingDuesCount'),
+                  child: const Icon(Icons.people_alt_rounded),
+                ),
+                label: 'Dues',
               ),
               NavigationDestination(
                 icon: Badge(
@@ -136,19 +227,10 @@ class _HomeNavigationScreenState extends State<HomeNavigationScreen> {
                 selectedIcon: Icon(Icons.account_balance_wallet_rounded),
                 label: 'Expenses',
               ),
-              const NavigationDestination(
-                icon: Icon(Icons.receipt_long_outlined),
-                selectedIcon: Icon(Icons.receipt_long_rounded),
-                label: 'Cashflow',
-              ),
-              const NavigationDestination(
-                icon: Icon(Icons.settings_outlined),
-                selectedIcon: Icon(Icons.settings_rounded),
-                label: 'Settings',
-              ),
             ],
           ),
         ),
+      ),
       ),
     );
   }

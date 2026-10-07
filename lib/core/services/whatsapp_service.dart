@@ -51,7 +51,7 @@ class WhatsAppService {
   }) {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
     final formattedAmount = currencyFormat.format(amount);
-    final formattedDate = DateFormat('dd MMMM yyyy').format(dueDate);
+    final formattedDate = DateFormat('dd-MMM-yyyy').format(dueDate);
     final name = personName.trim().isEmpty ? 'Valued Contact' : personName.trim();
 
     final buffer = StringBuffer();
@@ -87,7 +87,7 @@ class WhatsAppService {
   }) {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
     final formattedAmount = currencyFormat.format(amount);
-    final formattedDate = DateFormat('dd MMMM yyyy').format(dueDate);
+    final formattedDate = DateFormat('dd-MMM-yyyy').format(dueDate);
     final name = payeeName.trim().isEmpty ? 'Payee' : payeeName.trim();
 
     final buffer = StringBuffer();
@@ -158,7 +158,7 @@ class WhatsAppService {
   }) {
     final currencyFormat = NumberFormat.currency(locale: 'en_IN', symbol: '₹', decimalDigits: 0);
     final formattedAmount = currencyFormat.format(amount);
-    final formattedDate = DateFormat('dd MMMM yyyy').format(date);
+    final formattedDate = DateFormat('dd-MMM-yyyy').format(date);
     final isCredit = type.toUpperCase() == 'CREDIT';
 
     final buffer = StringBuffer();
@@ -200,7 +200,7 @@ class WhatsAppService {
           'recipientPhone': sanitizedNumber,
           'personName': personName ?? 'Contact',
           'amount': amount ?? 0.0,
-          'dueDate': dueDate != null ? DateFormat('dd MMM yyyy').format(dueDate) : null,
+          'dueDate': dueDate != null ? DateFormat('dd-MMM-yyyy').format(dueDate) : null,
           'note': message,
         }),
       ).timeout(const Duration(seconds: 3));

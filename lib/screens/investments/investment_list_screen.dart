@@ -9,7 +9,8 @@ import 'add_investment_screen.dart';
 import 'investment_detail_screen.dart';
 
 class InvestmentListScreen extends StatefulWidget {
-  const InvestmentListScreen({super.key});
+  final VoidCallback? onOpenDrawer;
+  const InvestmentListScreen({super.key, this.onOpenDrawer});
 
   @override
   State<InvestmentListScreen> createState() => _InvestmentListScreenState();
@@ -268,49 +269,51 @@ class _InvestmentListScreenState extends State<InvestmentListScreen> {
           Expanded(
             child: filtered.isEmpty
                 ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(18),
+                            padding: const EdgeInsets.all(14),
                             decoration: BoxDecoration(
                               color: const Color(0xFF6366F1).withAlpha(20),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
                               Icons.savings_outlined,
-                              size: 48,
+                              size: 38,
                               color: Color(0xFF6366F1),
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                           Text(
                             allActive.isEmpty
                                 ? 'Build Your Wealth Portfolio'
                                 : 'No Matching Assets Found',
                             style: const TextStyle(
-                              fontSize: 17,
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             allActive.isEmpty
                                 ? 'Track stocks, mutual funds, FDs, gold, and real estate with real-time monthly and yearly return projections.'
                                 : 'Try searching with a different keyword or category filter.',
                             textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey, fontSize: 13, height: 1.4),
+                            style: const TextStyle(color: Colors.grey, fontSize: 12, height: 1.3),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 14),
                           if (allActive.isEmpty)
                             ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF6366F1),
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 elevation: 2,
                               ),
                               onPressed: () {

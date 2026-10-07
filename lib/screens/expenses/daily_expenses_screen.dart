@@ -298,7 +298,7 @@ class _DailyExpensesScreenState extends State<DailyExpensesScreen> {
                             const Icon(Icons.event_rounded, size: 18, color: Color(0xFF6366F1)),
                             const SizedBox(width: 8),
                             Text(
-                              'Date: ${DateFormat('dd MMM yyyy').format(expenseDate)}',
+                              'Date: ${DateFormat('dd-MMM-yyyy').format(expenseDate)}',
                               style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                             ),
                           ],
@@ -471,7 +471,7 @@ class _DailyExpensesScreenState extends State<DailyExpensesScreen> {
     String periodTitle;
     switch (_period) {
       case ExpensePeriod.today:
-        periodTitle = 'Today • ${DateFormat('dd MMM').format(now)}';
+        periodTitle = 'Today • ${DateFormat('dd-MMM').format(now)}';
         break;
       case ExpensePeriod.thisWeek:
         periodTitle = 'This Week';
@@ -480,7 +480,7 @@ class _DailyExpensesScreenState extends State<DailyExpensesScreen> {
         periodTitle = DateFormat('MMMM yyyy').format(now);
         break;
       case ExpensePeriod.customDay:
-        periodTitle = DateFormat('EEE, dd MMM yyyy').format(_selectedDate);
+        periodTitle = DateFormat('EEE, dd-MMM-yyyy').format(_selectedDate);
         break;
     }
 
@@ -536,7 +536,7 @@ class _DailyExpensesScreenState extends State<DailyExpensesScreen> {
                   _buildPeriodChip('This Month', ExpensePeriod.thisMonth),
                   const SizedBox(width: 8),
                   _buildPeriodChip(
-                    _period == ExpensePeriod.customDay ? DateFormat('dd MMM').format(_selectedDate) : 'Pick Day',
+                    _period == ExpensePeriod.customDay ? DateFormat('dd-MMM').format(_selectedDate) : 'Pick Day',
                     ExpensePeriod.customDay,
                     icon: Icons.calendar_today_rounded,
                   ),
@@ -555,7 +555,7 @@ class _DailyExpensesScreenState extends State<DailyExpensesScreen> {
                     tooltip: 'Previous Day',
                   ),
                   Text(
-                    DateFormat('EEE, dd MMM yyyy').format(_selectedDate),
+                    DateFormat('EEE, dd-MMM-yyyy').format(_selectedDate),
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   IconButton(

@@ -226,7 +226,7 @@ class _AddDueScreenState extends State<AddDueScreen> {
               controller: _nameController,
               decoration: const InputDecoration(
                 labelText: 'Person Name',
-                hintText: 'e.g. Omkar, Ravi, Suresh',
+                hintText: 'e.g. Rahul Sharma, Acme Corp, Client',
                 prefixIcon: Icon(Icons.person_rounded),
               ),
               validator: (val) => val == null || val.trim().isEmpty ? 'Please enter person name' : null,
@@ -251,7 +251,7 @@ class _AddDueScreenState extends State<AddDueScreen> {
               keyboardType: TextInputType.emailAddress,
               decoration: const InputDecoration(
                 labelText: 'Email Address (Optional)',
-                hintText: 'e.g. omkar@example.com',
+                hintText: 'e.g. client@example.com',
                 prefixIcon: Icon(Icons.email_outlined),
               ),
             ),
@@ -324,7 +324,7 @@ class _AddDueScreenState extends State<AddDueScreen> {
               maxLines: 2,
               decoration: const InputDecoration(
                 labelText: 'Reason / Terms / Notes (Optional)',
-                hintText: 'e.g. Lent for travel, partial payment history, terms',
+                hintText: 'e.g. Consulting balance, milestone payment, invoice note',
                 prefixIcon: Icon(Icons.notes_rounded),
               ),
             ),

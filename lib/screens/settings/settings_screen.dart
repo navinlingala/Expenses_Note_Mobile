@@ -18,7 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Notification Preferences
   bool _inAppNotifications = true;
   bool _soundAndVibrate = true;
-  TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
+  final TimeOfDay _reminderTime = const TimeOfDay(hour: 9, minute: 0);
 
   // WhatsApp Alert Preferences
   bool _whatsAppAlerts = true;
@@ -165,38 +165,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     style: const TextStyle(fontSize: 11),
                   ),
                   trailing: const Icon(Icons.edit_calendar_rounded, size: 18),
-                  onTap: () async {
-                    final picked = await showTimePicker(
-                      context: context,
-                      initialTime: _reminderTime,
-                    );
-                    if (picked != null) {
-                      setState(() => _reminderTime = picked);
-                    }
-                  },
-                ),
-                const Divider(height: 1),
-                ListTile(
-                  leading: const Icon(Icons.play_circle_outline_rounded, size: 20, color: Color(0xFF6366F1)),
-                  title: const Text('Test In-App Notification Now', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF6366F1))),
-                  subtitle: const Text('Fires a sample heads-up alarm in 3 seconds', style: TextStyle(fontSize: 11)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () async {
-                    await NotificationService.instance.scheduleNotification(
-                      id: 99999,
-                      title: '🔔 EMI Reminder: Personal Loan',
-                      body: 'Your upcoming EMI of ₹27,886 is due tomorrow morning!',
-                      scheduledDate: DateTime.now().add(const Duration(seconds: 3)),
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Test notification scheduled for 3 seconds from now! Check your device banner.'),
-                          backgroundColor: Color(0xFF6366F1),
-                        ),
+                                      onTap: () async {
+                      // Request permission first
+                      final granted = await NotificationService.instance.requestPermissions();
+                      
+                      // Trigger instant notification
+                      await NotificationService.instance.showInstantNotification(
+                        id: 99999,
+                        title: '🔔 EMI Reminder: Personal Loan',
+                        body: 'Your upcoming loan EMI of ₹18,500 is due tomorrow!',
                       );
-                    }
-                  },
+
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(granted 
+                              ? '🔔 Test notification sent to your status bar!' 
+                              : 'Notification sent! If not visible, please grant notification permission in phone settings.'),
+                            backgroundColor: const Color(0xFF6366F1),
+                            duration: const Duration(seconds: 4),
+                          ),
+                        );
+                      }
+                    },
                 ),
               ],
             ),
@@ -478,11 +469,11 @@ class _WhatsAppTestingSheetState extends State<_WhatsAppTestingSheet> with Singl
                   title: 'Borrower Payment Notice (Who Owes Me)',
                   description: 'Sent to borrowers/friends who owe you money.',
                   message: WhatsAppService.instance.generateBorrowerDueReminder(
-                    personName: 'Keerthi',
-                    amount: 1500,
+                    personName: 'Rahul Sharma',
+                    amount: 25000,
                     dueDate: DateTime.now().add(const Duration(days: 2)),
-                    title: 'Lent for travel / Freelance balance',
-                    customNote: 'Personal loan clearance',
+                    title: 'Consulting Services Invoice',
+                    customNote: 'Project Milestone Balance',
                   ),
                 ),
 
@@ -493,12 +484,12 @@ class _WhatsAppTestingSheetState extends State<_WhatsAppTestingSheet> with Singl
                   description: 'Scheduled alert sent for your active bank/lender loan EMI.',
                   message: WhatsAppService.instance.generateLoanEmiReminder(
                     loanTitle: 'personal loan',
-                    lenderName: 'piramal',
-                    emiAmount: 27886,
+                    lenderName: 'HDFC Bank',
+                    emiAmount: 18500,
                     dueDay: 5,
-                    paidEmis: 24,
-                    totalEmis: 60,
-                    remainingBalance: 1003896,
+                    paidEmis: 12,
+                    totalEmis: 36,
+                    remainingBalance: 444000,
                     nextDueDate: DateTime.now().add(const Duration(days: 5)),
                   ),
                 ),

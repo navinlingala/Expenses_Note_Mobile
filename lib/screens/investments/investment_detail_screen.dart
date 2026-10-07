@@ -407,10 +407,10 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
               children: [
                 _infoRow('Invested Principal', CurrencyFormatter.format(inv.investedAmount)),
                 _infoRow('Investment Type', inv.investmentType == 'SIP' ? 'Monthly SIP (${CurrencyFormatter.format(inv.sipAmount ?? 0)}/mo)' : 'One-time Lump sum'),
-                _infoRow('Investment Date', DateFormat('dd MMMM yyyy').format(inv.startDate)),
+                _infoRow('Investment Date', DateFormat('dd-MMM-yyyy').format(inv.startDate)),
                 _infoRow('Holding Period', '${inv.holdingDays} days (${inv.holdingYears.toStringAsFixed(1)} years)'),
                 if (inv.maturityDate != null)
-                  _infoRow('Maturity Date', DateFormat('dd MMMM yyyy').format(inv.maturityDate!)),
+                  _infoRow('Maturity Date', DateFormat('dd-MMM-yyyy').format(inv.maturityDate!)),
                 _infoRow('Risk Rating', inv.riskLevel),
                 if (inv.notes != null && inv.notes!.isNotEmpty)
                   _infoRow('Notes / Folio', inv.notes!),

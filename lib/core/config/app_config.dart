@@ -22,8 +22,8 @@ class AppConfig {
   /// Production Backend: Connected to your Local Host on Wi-Fi IP (192.168.55.107:8080)
   /// Running in PROD profile against your Neon PostgreSQL Database!
   /// When deployed on Render, you can switch this to 'https://expenses-note-backend.onrender.com'
-  static const String liveBackendUrl = 'http://192.168.55.107:8080';
-
+   static const String liveBackendUrl = 'http://192.168.55.107:8080';
+  // static const String liveBackendUrl = 'https://expenses-note-backend.onrender.com';
   /// Development / Localhost Endpoints (for Chrome web & Android emulator)
   static const String localWebUrl = 'http://localhost:8080';
   static const String localAndroidEmulatorUrl = 'http://10.0.2.2:8080';

@@ -1,10 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/loan_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../home_navigation_screen.dart';
-import 'login_screen.dart';
+import '../onboarding/onboarding_flow_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -35,17 +35,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final auth = context.watch<AuthProvider>();
 
     if (!auth.isInitialized) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(color: Color(0xFF6366F1)),
-        ),
-      );
+      return const OnboardingFlowScreen();
     }
 
     if (auth.isAuthenticated) {
       return const HomeNavigationScreen();
     } else {
-      return const LoginScreen();
+      return const OnboardingFlowScreen();
     }
   }
 }

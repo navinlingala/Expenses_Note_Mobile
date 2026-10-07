@@ -1,8 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import '../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/loan_provider.dart';
 import '../../providers/transaction_provider.dart';
+import '../home_navigation_screen.dart';
+import 'models/auth_content_data.dart';
+import 'widgets/auth_components.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -12,234 +17,293 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmPasswordController = TextEditingController();
-  bool _obscurePassword = true;
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+  final _passCtrl = TextEditingController();
+  final _confirmPassCtrl = TextEditingController();
+
+  bool _obscurePass = true;
+  bool _obscureConfirmPass = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _passwordController.dispose();
-    _confirmPasswordController.dispose();
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _phoneCtrl.dispose();
+    _passCtrl.dispose();
+    _confirmPassCtrl.dispose();
     super.dispose();
   }
 
-  
-  Future<void> _handleSkip() async {
-    final auth = context.read<AuthProvider>();
-    auth.continueAsGuest();
-    final user = auth.currentUser!;
-    await context.read<LoanProvider>().loadLoans(user.id);
-    if (!mounted) return;
-    await context.read<TransactionProvider>().loadTransactions(user.id);
-    if (!mounted) return;
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
-
   Future<void> _handleRegister() async {
-    if (!_formKey.currentState!.validate()) return;
+    final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final phone = _phoneCtrl.text.trim().replaceAll(' ', '');
+    final pass = _passCtrl.text;
+    final confirmPass = _confirmPassCtrl.text;
 
+    if (name.isEmpty || email.isEmpty || pass.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AuthContentData.errorFillRequired)),
+      );
+      return;
+    }
+
+    if (pass.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AuthContentData.errorPasswordLength)),
+      );
+      return;
+    }
+
+    if (pass != confirmPass) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text(AuthContentData.errorPasswordMismatch)),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
     final auth = context.read<AuthProvider>();
     final success = await auth.register(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-      password: _passwordController.text,
+      name: name,
+      email: email,
+      phone: phone.isNotEmpty ? '+91$phone' : '+919010067464',
+      password: pass,
     );
+    setState(() => _isLoading = false);
 
-    if (!success || !mounted) return;
-    final user = auth.currentUser!;
-    await context.read<LoanProvider>().loadLoans(user.id);
     if (!mounted) return;
-    await context.read<TransactionProvider>().loadTransactions(user.id);
-    if (!mounted) return;
-    Navigator.pop(context);
+    if (success) {
+      final userId = auth.currentUser!.id;
+      await context.read<LoanProvider>().loadLoans(userId);
+      if (!mounted) return;
+      await context.read<TransactionProvider>().loadTransactions(userId);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeNavigationScreen()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(auth.errorMessage ?? 'Registration failed')),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final auth = context.watch<AuthProvider>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-        actions: [
+    return AuthAmbientBackground(
+      child: Column(
+        children: [
+          // Top Navigation Bar
           Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: TextButton.icon(
-              onPressed: _handleSkip,
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF6366F1),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                  side: BorderSide(color: const Color(0xFF6366F1).withAlpha(50)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: isDark ? Colors.white12 : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 16),
+                    color: isDark ? Colors.white70 : const Color(0xFF475569),
+                    onPressed: () => Navigator.pop(context),
+                  ),
                 ),
-              ),
-              icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-              label: const Text(
-                'Skip',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-              ),
+                const Spacer(),
+                Text(
+                  AuthContentData.appName.toUpperCase(),
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                    color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF334155),
+                  ),
+                ),
+                const Spacer(),
+                const SizedBox(width: 42),
+              ],
             ),
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Join Expenses Note',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Your transactions and EMI reminders are stored securely and isolated to your account.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white60 : Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 24),
 
-                // Error Message Banner
-                if (auth.errorMessage != null) ...[
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF43F5E).withAlpha(25),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFF43F5E).withAlpha(80)),
+          // Scrollable Registration Form
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                children: [
+                  const SizedBox(height: 6),
+
+                  // Hero Emblem
+                  const AuthHeaderEmblem(
+                    icon: Icons.person_add_rounded,
+                    accentColor: AppTheme.creditGreen,
+                    size: 64,
+                  ),
+
+                  const SizedBox(height: 14),
+
+                  // Title & Subtitle
+                  Text(
+                    AuthContentData.registerTitle,
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -0.5,
+                      color: isDark ? Colors.white : const Color(0xFF0F172A),
                     ),
-                    child: Row(
+                  ),
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      AuthContentData.registerSubtitle,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 18),
+
+                  // Glassmorphic Form Card
+                  AuthGlassCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(Icons.error_outline_rounded, color: Color(0xFFF43F5E), size: 20),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            auth.errorMessage!,
-                            style: const TextStyle(color: Color(0xFFF43F5E), fontSize: 12, fontWeight: FontWeight.w600),
+                        // Full Name
+                        AuthInputField(
+                          controller: _nameCtrl,
+                          label: AuthContentData.registerNameLabel,
+                          hint: AuthContentData.registerNameHint,
+                          icon: Icons.person_outline_rounded,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Email Address
+                        AuthInputField(
+                          controller: _emailCtrl,
+                          label: AuthContentData.registerEmailLabel,
+                          hint: AuthContentData.registerEmailHint,
+                          icon: Icons.mail_outline_rounded,
+                          keyboardType: TextInputType.emailAddress,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // WhatsApp / Phone
+                        AuthInputField(
+                          controller: _phoneCtrl,
+                          label: AuthContentData.registerPhoneLabel,
+                          hint: AuthContentData.registerPhoneHint,
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Password
+                        AuthInputField(
+                          controller: _passCtrl,
+                          label: AuthContentData.registerPasswordLabel,
+                          hint: AuthContentData.registerPasswordHint,
+                          icon: Icons.lock_outline_rounded,
+                          obscureText: _obscurePass,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePass ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                              size: 19,
+                            ),
+                            onPressed: () => setState(() => _obscurePass = !_obscurePass),
+                          ),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        // Confirm Password
+                        AuthInputField(
+                          controller: _confirmPassCtrl,
+                          label: AuthContentData.registerConfirmPasswordLabel,
+                          hint: AuthContentData.registerConfirmPasswordHint,
+                          icon: Icons.shield_outlined,
+                          obscureText: _obscureConfirmPass,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureConfirmPass ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF94A3B8),
+                              size: 19,
+                            ),
+                            onPressed: () => setState(() => _obscureConfirmPass = !_obscureConfirmPass),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // Register Primary Button
+                        AuthPrimaryButton(
+                          label: AuthContentData.registerButton,
+                          onPressed: _handleRegister,
+                          isLoading: _isLoading,
+                          icon: Icons.arrow_forward_rounded,
+                          gradientColors: const [Color(0xFF10B981), Color(0xFF059669)],
+                          glowColor: const Color(0xFF10B981),
+                        ),
+
+                        const SizedBox(height: 18),
+
+                        // Already have an account? Sign In
+                        Center(
+                          child: GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Text.rich(
+                              TextSpan(
+                                text: AuthContentData.alreadyHaveAccount,
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B),
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: AuthContentData.signInLink,
+                                    style: GoogleFonts.outfit(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: AppTheme.creditGreen,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 18),
+
+                  const SizedBox(height: 20),
                 ],
-
-                // Full Name
-                TextFormField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    hintText: 'e.g. Naveen Kumar',
-                    prefixIcon: Icon(Icons.person_outline_rounded),
-                  ),
-                  validator: (val) => val == null || val.trim().isEmpty ? 'Please enter your name' : null,
-                ),
-                const SizedBox(height: 14),
-
-                // Email
-                TextFormField(
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    labelText: 'Email Address',
-                    hintText: 'name@example.com',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.trim().isEmpty) return 'Please enter an email';
-                    if (!val.contains('@') || !val.contains('.')) return 'Enter a valid email';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // Phone Number
-                TextFormField(
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone Number (Optional)',
-                    hintText: 'e.g. 9876543210',
-                    prefixIcon: Icon(Icons.phone_outlined),
-                  ),
-                ),
-                const SizedBox(height: 14),
-
-                // Password
-                TextFormField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline_rounded),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-                      ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
-                  ),
-                  validator: (val) {
-                    if (val == null || val.isEmpty) return 'Please enter a password';
-                    if (val.length < 6) return 'Password must be at least 6 characters';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
-
-                // Confirm Password
-                TextFormField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscurePassword,
-                  decoration: const InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: Icon(Icons.lock_clock_outlined),
-                  ),
-                  validator: (val) {
-                    if (val != _passwordController.text) return 'Passwords do not match';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-
-                // Register Button
-                ElevatedButton(
-                  onPressed: auth.isLoading ? null : _handleRegister,
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  child: auth.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                        )
-                      : const Text('Create Account', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                ),
-              ],
+              ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-

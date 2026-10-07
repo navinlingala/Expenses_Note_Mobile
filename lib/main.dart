@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
@@ -9,6 +10,7 @@ import 'providers/auth_provider.dart';
 import 'providers/loan_provider.dart';
 import 'providers/transaction_provider.dart';
 import 'providers/investment_provider.dart';
+import 'providers/income_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 
 void main() async {
@@ -16,6 +18,7 @@ void main() async {
 
   // 1. Universal DatabaseFactory Initialization across Web, Desktop, and Mobile
   if (kIsWeb) {
+    GoogleFonts.config.allowRuntimeFetching = true;
     // databaseFactoryFfiWebNoWebWorker uses in-process WASM + IndexedDB directly,
     // avoiding web worker / sqflite_sw.js fetch issues in all browser environments
     databaseFactory = databaseFactoryFfiWebNoWebWorker;
@@ -46,6 +49,7 @@ class MoneyReminderApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LoanProvider()),
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => InvestmentProvider()),
+        ChangeNotifierProvider(create: (_) => IncomeProvider()),
       ],
       child: MaterialApp(
         title: 'Money Reminder & EMI Tracker',

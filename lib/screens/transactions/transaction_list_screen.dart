@@ -298,7 +298,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> with Sing
                     child: Icon(Icons.today_rounded, color: Color(0xFF6366F1)),
                   ),
                   title: const Text('Today', style: TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(DateFormat('dd MMMM yyyy').format(DateTime.now())),
+                  subtitle: Text(DateFormat('dd-MMM-yyyy').format(DateTime.now())),
                   onTap: () {
                     Navigator.pop(ctx);
                     setState(() {
@@ -457,11 +457,11 @@ class _TransactionListScreenState extends State<TransactionListScreen> with Sing
         return AppDateUtils.formatMonthYear(_selectedYear, _selectedMonth);
       case DateFilterMode.day:
         final d = _selectedDay ?? DateTime.now();
-        return DateFormat('EEE, dd MMM yyyy').format(d);
+        return DateFormat('EEE, dd-MMM-yyyy').format(d);
       case DateFilterMode.range:
         if (_selectedDateRange != null) {
-          final s = DateFormat('dd MMM yyyy').format(_selectedDateRange!.start);
-          final e = DateFormat('dd MMM yyyy').format(_selectedDateRange!.end);
+          final s = DateFormat('dd-MMM-yyyy').format(_selectedDateRange!.start);
+          final e = DateFormat('dd-MMM-yyyy').format(_selectedDateRange!.end);
           return '$s - $e';
         }
         return 'Custom Date Range';
@@ -745,7 +745,7 @@ class _TransactionListScreenState extends State<TransactionListScreen> with Sing
                 ActionChip(
                   avatar: const Icon(Icons.event_rounded, size: 16, color: Color(0xFF6366F1)),
                   label: Text(_filterMode == DateFilterMode.day && _selectedDay != null
-                      ? DateFormat('dd MMM').format(_selectedDay!)
+                      ? DateFormat('dd-MMM').format(_selectedDay!)
                       : 'Pick Day'),
                   backgroundColor: _filterMode == DateFilterMode.day ? const Color(0xFF6366F1).withAlpha(40) : null,
                   onPressed: _pickSpecificDay,

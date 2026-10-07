@@ -195,7 +195,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
               controller: _lenderController,
               decoration: const InputDecoration(
                 labelText: 'Bank / Lender Name',
-                hintText: 'e.g. Piramal, HDFC Bank, SBI, Friend',
+                hintText: 'e.g. HDFC Bank, SBI, Tata Capital, Friend',
                 prefixIcon: Icon(Icons.account_balance_rounded),
               ),
               validator: (val) => val == null || val.trim().isEmpty ? 'Please enter lender name' : null,
@@ -210,7 +210,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Total Loan (₹)',
-                      hintText: 'e.g. 1673160',
+                      hintText: 'e.g. 500000',
                       prefixIcon: Icon(Icons.currency_rupee_rounded),
                     ),
                     validator: (val) {
@@ -227,7 +227,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'EMI Amount (₹)',
-                      hintText: 'e.g. 27886',
+                      hintText: 'e.g. 15000',
                       prefixIcon: Icon(Icons.payments_rounded),
                     ),
                     validator: (val) {
@@ -287,7 +287,7 @@ class _AddLoanScreenState extends State<AddLoanScreen> {
               keyboardType: TextInputType.number,
               decoration: InputDecoration(
                 labelText: 'Already Paid / Cleared EMIs',
-                hintText: 'e.g. 24 (if taken 2 years back)',
+                hintText: 'e.g. 12 (if cleared 1 year of EMIs)',
                 helperText: 'Number of EMIs already cleared before tracking in app',
                 prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981)),
                 suffixIcon: IconButton(
