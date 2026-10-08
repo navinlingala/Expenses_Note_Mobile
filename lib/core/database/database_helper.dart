@@ -1,5 +1,6 @@
 
 import '../../models/investment_model.dart';
+import '../../models/gold_asset_model.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
@@ -28,6 +29,28 @@ class DatabaseHelper {
   }
 
   Future<void> _ensureTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS gold_assets (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        gold_type TEXT NOT NULL,
+        purity TEXT NOT NULL,
+        weight_in_grams REAL NOT NULL,
+        purchase_price_per_gram REAL NOT NULL,
+        making_charges REAL NOT NULL DEFAULT 0.0,
+        total_invested_amount REAL NOT NULL,
+        purchase_date TEXT NOT NULL,
+        locker_location TEXT,
+        huid_number TEXT,
+        jeweler_name TEXT,
+        sgb_interest_rate REAL DEFAULT 2.5,
+        maturity_date TEXT,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'ACTIVE',
+        created_at TEXT NOT NULL
+      )
+    ''');
     await db.execute('''
       CREATE TABLE IF NOT EXISTS investments (
         id TEXT PRIMARY KEY,
@@ -670,4 +693,55 @@ class DatabaseHelper {
       }
     });
   }
+
+  // --- Gold Asset Operations ---
+  Future<int> insertGoldAsset(GoldAssetModel asset) async {
+    final db = await database;
+    return await db.insert(
+      'gold_assets',
+      asset.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<GoldAssetModel>> getGoldAssets(String userId) async {
+    final db = await database;
+    final res = await db.query(
+      'gold_assets',
+      where: 'user_id = ?',
+      whereArgs: [userId],
+      orderBy: 'created_at DESC',
+    );
+    return res.map((e) => GoldAssetModel.fromMap(e)).toList();
+  }
+
+  Future<int> updateGoldAsset(GoldAssetModel asset) async {
+    final db = await database;
+    return await db.update(
+      'gold_assets',
+      asset.toMap(),
+      where: 'id = ?',
+      whereArgs: [asset.id],
+    );
+  }
+
+  Future<int> deleteGoldAsset(String id) async {
+    final db = await database;
+    return await db.delete(
+      'gold_assets',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> syncReplaceGoldAssets(String userId, List<GoldAssetModel> remoteAssets) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('gold_assets', where: 'user_id = ?', whereArgs: [userId]);
+      for (final asset in remoteAssets) {
+        await txn.insert('gold_assets', asset.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
 }
+

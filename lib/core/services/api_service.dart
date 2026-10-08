@@ -377,4 +377,62 @@ class ApiService {
       return false;
     }
   }
+
+  // --- GOLD ASSETS CRUD ---
+  Future<List<Map<String, dynamic>>> fetchGoldAssets(String userId) async {
+    try {
+      final url = Uri.parse('$baseUrl/gold-assets?userId=$userId');
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveGoldAsset(Map<String, dynamic> assetMap) async {
+    try {
+      final url = Uri.parse('$baseUrl/gold-assets');
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(assetMap),
+          )
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateGoldAsset(String id, Map<String, dynamic> assetMap) async {
+    try {
+      final url = Uri.parse('$baseUrl/gold-assets/$id');
+      final response = await http
+          .put(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode(assetMap),
+          )
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteGoldAsset(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/gold-assets/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
 }
+

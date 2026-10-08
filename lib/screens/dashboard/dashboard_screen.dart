@@ -7,6 +7,7 @@ import '../../providers/loan_provider.dart';
 import '../../providers/transaction_provider.dart';
 import '../../providers/investment_provider.dart';
 import '../../providers/income_provider.dart';
+import '../../providers/gold_provider.dart';
 import '../../widgets/whatsapp_button.dart';
 import 'cashflow_detail_screen.dart';
 import 'receivables_detail_screen.dart';
@@ -17,6 +18,7 @@ import '../loans/add_loan_screen.dart';
 import '../people/add_due_screen.dart';
 import '../transactions/add_transaction_screen.dart';
 import '../investments/investment_list_screen.dart';
+import '../gold/gold_portfolio_screen.dart';
 import '../income/family_income_screen.dart';
 import '../calculators/calculators_screen.dart';
 import '../trash/trash_screen.dart';
@@ -57,6 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final txProv = context.watch<TransactionProvider>();
     final invProv = context.watch<InvestmentProvider>();
     final incProv = context.watch<IncomeProvider>();
+    final goldProv = context.watch<GoldProvider>();
 
     final totalReceive = txProv.totalToReceive + invProv.totalExpectedMonthlyReturn;
     final totalPay = txProv.totalToPay + loanProv.totalMonthlyEmis;
@@ -254,6 +257,11 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
 
               // 5. WEALTH & INVESTMENTS PORTFOLIO STRIP
               _buildInvestmentPortfolioStrip(context, isDark, invProv),
+
+              const SizedBox(height: 12),
+
+              // 5.1 GOLD ASSETS & SGB WEALTH STRIP
+              _buildGoldPortfolioStrip(context, isDark, goldProv),
 
               const SizedBox(height: 18),
 
@@ -470,6 +478,15 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
           _actionPill(
             context: context,
             isDark: isDark,
+            label: '+ Gold Asset',
+            icon: Icons.shield_outlined,
+            color: const Color(0xFFEAB308),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GoldPortfolioScreen())),
+          ),
+          const SizedBox(width: 8),
+          _actionPill(
+            context: context,
+            isDark: isDark,
             label: '+ Salary / Income',
             icon: Icons.payments_rounded,
             color: const Color(0xFF059669),
@@ -680,6 +697,93 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ),
               ),
             ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- 5.1 GOLD ASSETS & SGB STRIP ---
+  Widget _buildGoldPortfolioStrip(BuildContext context, bool isDark, GoldProvider goldProv) {
+    final hasGold = goldProv.assets.isNotEmpty;
+    final totalGrams = goldProv.totalGoldWeightGrams;
+    final totalVal = goldProv.totalCurrentMarketValue;
+    final gain = goldProv.totalAbsoluteGain;
+    final gainPercent = goldProv.totalGainPercentage;
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const GoldPortfolioScreen()),
+      ),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFEAB308).withAlpha(60)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEAB308).withAlpha(25),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.shield_outlined, color: Color(0xFFEAB308), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Gold Assets & SGB', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasGold
+                        ? '${totalGrams.toStringAsFixed(1)}g (${goldProv.totalGoldWeightTolas.toStringAsFixed(1)} Tola) • ${CurrencyFormatter.format(totalVal)}'
+                        : 'Track physical jewelry, coins & SGB bonds',
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            if (hasGold)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: (gain >= 0 ? const Color(0xFF10B981) : const Color(0xFFF43F5E)).withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${gain >= 0 ? "+" : ""}${gainPercent.toStringAsFixed(1)}%',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: gain >= 0 ? const Color(0xFF10B981) : const Color(0xFFF43F5E),
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEAB308).withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Gold Vault',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFEAB308),
+                  ),
+                ),
+              ),
             const SizedBox(width: 4),
             const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
           ],

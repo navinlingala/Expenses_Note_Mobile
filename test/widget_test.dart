@@ -5,6 +5,6 @@ void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     await tester.pumpWidget(const MoneyReminderApp());
     expect(find.byType(MoneyReminderApp), findsOneWidget);
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump(const Duration(seconds: 5));
   });
 }

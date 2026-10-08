@@ -1,4 +1,6 @@
 import '../providers/income_provider.dart';
+import '../providers/gold_provider.dart';
+import '../screens/gold/gold_portfolio_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -304,6 +306,22 @@ class AppDrawer extends StatelessWidget {
                     onTap: () {
                       Navigator.pop(context);
                       onItemSelected(3);
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.shield_outlined,
+                    title: 'Gold Assets & SGB',
+                    subtitle: '${context.watch<GoldProvider>().totalGoldWeightGrams.toStringAsFixed(1)}g Total Holding',
+                    badgeCount: context.watch<GoldProvider>().assets.length,
+                    badgeColor: const Color(0xFFEAB308),
+                    isSelected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const GoldPortfolioScreen()),
+                      );
                     },
                   ),
                   _buildDrawerItem(
