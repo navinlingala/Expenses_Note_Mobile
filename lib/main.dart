@@ -12,6 +12,9 @@ import 'providers/transaction_provider.dart';
 import 'providers/investment_provider.dart';
 import 'providers/income_provider.dart';
 import 'providers/gold_provider.dart';
+import 'providers/child_provider.dart';
+import 'providers/credit_card_provider.dart';
+import 'providers/vault_provider.dart';
 import 'screens/auth/auth_wrapper.dart';
 
 void main() async {
@@ -52,6 +55,9 @@ class MoneyReminderApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => InvestmentProvider()),
         ChangeNotifierProvider(create: (_) => IncomeProvider()),
         ChangeNotifierProvider(create: (_) => GoldProvider()),
+        ChangeNotifierProvider(create: (_) => ChildProvider()),
+        ChangeNotifierProvider(create: (_) => CreditCardProvider()),
+        ChangeNotifierProvider(create: (_) => VaultProvider()),
       ],
       child: MaterialApp(
         title: 'Money Reminder & EMI Tracker',

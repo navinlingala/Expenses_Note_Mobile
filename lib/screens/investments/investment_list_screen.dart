@@ -18,6 +18,7 @@ class InvestmentListScreen extends StatefulWidget {
 
 class _InvestmentListScreenState extends State<InvestmentListScreen> {
   String _selectedCategory = 'ALL';
+  String _returnViewMode = 'MONTHLY'; // 'MONTHLY' or 'YEARLY'
   final _searchController = TextEditingController();
 
   @override
@@ -180,42 +181,103 @@ class _InvestmentListScreenState extends State<InvestmentListScreen> {
                 const Divider(color: Colors.white24, height: 1),
                 const SizedBox(height: 10),
 
-                // Passive Return Estimates Row
+                // Interactive Passive Return Switcher Banner
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        const Icon(Icons.auto_graph_rounded, size: 14, color: Color(0xFF6EE7B7)),
-                        const SizedBox(width: 5),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Est. Monthly Return', style: TextStyle(color: Colors.white60, fontSize: 10)),
-                            Text(
-                              '+${CurrencyFormatter.format(estMonthly)} / mo',
-                              style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 12, fontWeight: FontWeight.bold),
+                    // Monthly Return Option
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _returnViewMode = 'MONTHLY'),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _returnViewMode == 'MONTHLY'
+                                ? Colors.white.withAlpha(35)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _returnViewMode == 'MONTHLY'
+                                  ? const Color(0xFF6EE7B7).withAlpha(180)
+                                  : Colors.white12,
+                              width: _returnViewMode == 'MONTHLY' ? 1.2 : 0.8,
                             ),
-                          ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.auto_graph_rounded, size: 14, color: Color(0xFF6EE7B7)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text('Monthly Return', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                                        if (_returnViewMode == 'MONTHLY')
+                                          const Text(' ✓', style: TextStyle(color: Color(0xFF6EE7B7), fontSize: 9, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    Text(
+                                      '+${CurrencyFormatter.format(estMonthly)}/mo',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: Color(0xFF6EE7B7), fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                      ),
                     ),
-                    Container(height: 20, width: 1, color: Colors.white24),
-                    Row(
-                      children: [
-                        const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF93C5FD)),
-                        const SizedBox(width: 5),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Est. Yearly Return', style: TextStyle(color: Colors.white60, fontSize: 10)),
-                            Text(
-                              '+${CurrencyFormatter.format(estAnnual)} / yr',
-                              style: const TextStyle(color: Color(0xFF93C5FD), fontSize: 12, fontWeight: FontWeight.bold),
+                    const SizedBox(width: 8),
+                    // Yearly Return Option
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => setState(() => _returnViewMode = 'YEARLY'),
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: _returnViewMode == 'YEARLY'
+                                ? Colors.white.withAlpha(35)
+                                : Colors.transparent,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _returnViewMode == 'YEARLY'
+                                  ? const Color(0xFF93C5FD).withAlpha(180)
+                                  : Colors.white12,
+                              width: _returnViewMode == 'YEARLY' ? 1.2 : 0.8,
                             ),
-                          ],
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF93C5FD)),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        const Text('Yearly Return', style: TextStyle(color: Colors.white70, fontSize: 10)),
+                                        if (_returnViewMode == 'YEARLY')
+                                          const Text(' ✓', style: TextStyle(color: Color(0xFF93C5FD), fontSize: 9, fontWeight: FontWeight.bold)),
+                                      ],
+                                    ),
+                                    Text(
+                                      '+${CurrencyFormatter.format(estAnnual)}/yr',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: Color(0xFF93C5FD), fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -481,16 +543,51 @@ class _InvestmentListScreenState extends State<InvestmentListScreen> {
                       ),
                     ],
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text('Est. Monthly Return', style: TextStyle(fontSize: 10, color: Colors.grey)),
-                      const SizedBox(height: 2),
-                      Text(
-                        '+${CurrencyFormatter.format(inv.expectedMonthlyReturn)}/mo',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _returnViewMode = _returnViewMode == 'MONTHLY' ? 'YEARLY' : 'MONTHLY';
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _returnViewMode == 'MONTHLY' ? 'Est. Monthly' : 'Est. Yearly',
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                              const SizedBox(width: 2),
+                              const Icon(Icons.swap_horiz_rounded, size: 10, color: Colors.grey),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _returnViewMode == 'MONTHLY'
+                                ? '+${CurrencyFormatter.format(inv.expectedMonthlyReturn)}/mo'
+                                : '+${CurrencyFormatter.format(inv.expectedAnnualReturn)}/yr',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _returnViewMode == 'MONTHLY'
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFF0EA5E9),
+                            ),
+                          ),
+                          Text(
+                            _returnViewMode == 'MONTHLY'
+                                ? '${inv.monthlyReturnRate.toStringAsFixed(2)}%/mo'
+                                : '${inv.expectedReturnRate.toStringAsFixed(1)}% p.a.',
+                            style: const TextStyle(fontSize: 9.5, color: Colors.grey),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ],
               ),

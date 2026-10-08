@@ -41,10 +41,18 @@ class InvestmentModel {
   bool get isProfitable => absoluteGain >= 0;
 
   // Expected annual passive return in Currency
+  double get annualReturnRate => expectedReturnRate;
+  double get monthlyReturnRate => expectedReturnRate / 12.0;
   double get expectedAnnualReturn => investedAmount * (expectedReturnRate / 100);
 
   // Expected monthly return in Currency
   double get expectedMonthlyReturn => expectedAnnualReturn / 12;
+
+  // Period specific helpers ('MONTHLY' vs 'YEARLY')
+  double expectedReturnFor(String period) =>
+      period.toUpperCase() == 'MONTHLY' ? expectedMonthlyReturn : expectedAnnualReturn;
+  double returnRateFor(String period) =>
+      period.toUpperCase() == 'MONTHLY' ? monthlyReturnRate : annualReturnRate;
 
   // Duration held
   int get holdingDays => DateTime.now().difference(startDate).inDays;

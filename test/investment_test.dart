@@ -1,5 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
 import 'package:money_reminder_app/models/investment_model.dart';
+import 'package:money_reminder_app/providers/auth_provider.dart';
+import 'package:money_reminder_app/providers/investment_provider.dart';
+import 'package:money_reminder_app/screens/investments/add_investment_screen.dart';
 
 void main() {
   group('InvestmentModel Financial Calculations', () {
@@ -20,22 +25,31 @@ void main() {
       expect(inv.isProfitable, isTrue);
     });
 
-    test('Calculates monthly and yearly expected returns accurately', () {
+    test('Calculates monthly and yearly return rates and period helpers accurately', () {
       final inv = InvestmentModel(
         id: 'inv_2',
         userId: 'user_123',
         title: 'High Yield Fixed Deposit',
         category: 'FIXED_DEPOSIT',
-        investedAmount: 200000,
-        currentValue: 200000,
-        expectedReturnRate: 7.5,
+        investedAmount: 240000,
+        currentValue: 240000,
+        expectedReturnRate: 12.0,
         startDate: DateTime.now(),
       );
 
-      // Annual return: 200000 * 7.5% = 15,000
-      expect(inv.expectedAnnualReturn, equals(15000.0));
-      // Monthly return: 15,000 / 12 = 1,250
-      expect(inv.expectedMonthlyReturn, equals(1250.0));
+      // Annual return rate & returns
+      expect(inv.annualReturnRate, equals(12.0));
+      expect(inv.expectedAnnualReturn, equals(28800.0));
+
+      // Monthly return rate & returns
+      expect(inv.monthlyReturnRate, equals(1.0));
+      expect(inv.expectedMonthlyReturn, equals(2400.0));
+
+      // Period helpers
+      expect(inv.returnRateFor('MONTHLY'), equals(1.0));
+      expect(inv.returnRateFor('YEARLY'), equals(12.0));
+      expect(inv.expectedReturnFor('MONTHLY'), equals(2400.0));
+      expect(inv.expectedReturnFor('YEARLY'), equals(28800.0));
     });
 
     test('Computes future compounding projections for lump sum', () {
@@ -101,7 +115,44 @@ void main() {
       expect(reconstructed.investedAmount, equals(original.investedAmount));
       expect(reconstructed.currentValue, equals(original.currentValue));
       expect(reconstructed.expectedReturnRate, equals(original.expectedReturnRate));
+      expect(reconstructed.monthlyReturnRate, closeTo(0.666, 0.01));
       expect(reconstructed.notes, equals('RBI SGB Series IV'));
+    });
+  });
+
+  group('Investment Screens Responsive Render Tests (320px Width)', () {
+    testWidgets('AddInvestmentScreen renders without overflow on 320px width', (WidgetTester tester) async {
+      FlutterErrorDetails? caughtError;
+      final originalOnError = FlutterError.onError;
+      FlutterError.onError = (details) {
+        caughtError = details;
+      };
+
+      tester.view.physicalSize = const Size(320 * 2.0, 640 * 2.0);
+      tester.view.devicePixelRatio = 2.0;
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => AuthProvider()),
+            ChangeNotifierProvider(create: (_) => InvestmentProvider()),
+          ],
+          child: const MaterialApp(
+            home: AddInvestmentScreen(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      FlutterError.onError = originalOnError;
+
+      if (caughtError != null) {
+        // ignore: avoid_print
+        print('FULL FLUTTER ERROR:\n${caughtError.toString()}');
+      }
+
+      expect(find.byType(AddInvestmentScreen), findsOneWidget);
+      expect(caughtError, isNull);
     });
   });
 }

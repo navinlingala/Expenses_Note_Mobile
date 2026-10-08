@@ -11,6 +11,13 @@ import '../../models/user_model.dart';
 import '../../models/loan_model.dart';
 import '../../models/transaction_model.dart';
 import '../../models/payment_history_model.dart';
+import '../../models/child_profile_model.dart';
+import '../../models/child_expense_model.dart';
+import '../../models/child_investment_model.dart';
+import '../../models/child_future_goal_model.dart';
+import '../../models/credit_card_model.dart';
+import '../../models/credit_card_transaction_model.dart';
+import '../../models/vault_item_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -29,6 +36,82 @@ class DatabaseHelper {
   }
 
   Future<void> _ensureTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS credit_cards (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        card_name TEXT NOT NULL,
+        bank_name TEXT NOT NULL,
+        card_network TEXT NOT NULL DEFAULT 'VISA',
+        card_number TEXT,
+        card_holder_name TEXT,
+        expiry_date TEXT,
+        cvv TEXT,
+        card_pin TEXT,
+        last4_digits TEXT,
+        total_limit REAL NOT NULL,
+        available_limit REAL NOT NULL,
+        current_outstanding REAL NOT NULL DEFAULT 0.0,
+        statement_day INTEGER NOT NULL DEFAULT 15,
+        due_day INTEGER NOT NULL DEFAULT 5,
+        color_theme TEXT DEFAULT 'BLUE_PURPLE',
+        reminder_enabled INTEGER DEFAULT 1,
+        interest_free_days INTEGER DEFAULT 50,
+        status TEXT NOT NULL DEFAULT 'ACTIVE',
+        notes TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await _addColumnIfNotExists(db, 'credit_cards', 'card_number', 'TEXT');
+    await _addColumnIfNotExists(db, 'credit_cards', 'card_holder_name', 'TEXT');
+    await _addColumnIfNotExists(db, 'credit_cards', 'expiry_date', 'TEXT');
+    await _addColumnIfNotExists(db, 'credit_cards', 'cvv', 'TEXT');
+    await _addColumnIfNotExists(db, 'credit_cards', 'card_pin', 'TEXT');
+    await _addColumnIfNotExists(db, 'credit_cards', 'last4_digits', 'TEXT');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS vault_items (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        item_type TEXT NOT NULL DEFAULT 'CARD',
+        title TEXT NOT NULL,
+        subtitle TEXT,
+        account_or_card_number TEXT,
+        holder_name TEXT,
+        expiry_date TEXT,
+        cvv TEXT,
+        pin TEXT,
+        password TEXT,
+        ifsc_code TEXT,
+        upi_id TEXT,
+        url_or_app TEXT,
+        secret_content TEXT,
+        color_theme TEXT DEFAULT 'OBSIDIAN',
+        category TEXT DEFAULT 'GENERAL',
+        is_favorite INTEGER DEFAULT 0,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS credit_card_transactions (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        card_id TEXT NOT NULL,
+        amount REAL NOT NULL,
+        merchant_name TEXT,
+        category TEXT NOT NULL DEFAULT 'SHOPPING',
+        transaction_date TEXT NOT NULL,
+        transaction_type TEXT NOT NULL DEFAULT 'EXPENSE',
+        is_emi INTEGER DEFAULT 0,
+        emi_months INTEGER,
+        monthly_emi_amount REAL,
+        is_billed INTEGER DEFAULT 0,
+        notes TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
     await db.execute('''
       CREATE TABLE IF NOT EXISTS gold_assets (
         id TEXT PRIMARY KEY,
@@ -83,6 +166,70 @@ class DatabaseHelper {
         email TEXT UNIQUE NOT NULL,
         phone TEXT,
         password_hash TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS child_profiles (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        gender TEXT NOT NULL DEFAULT 'MALE',
+        date_of_birth TEXT NOT NULL,
+        school_or_college TEXT,
+        avatar_color TEXT NOT NULL DEFAULT '0xFF3B82F6',
+        photo_url TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS child_expenses (
+        id TEXT PRIMARY KEY,
+        child_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        amount REAL NOT NULL,
+        category TEXT NOT NULL,
+        expense_date TEXT NOT NULL,
+        payment_mode TEXT DEFAULT 'UPI',
+        is_recurring INTEGER DEFAULT 0,
+        recurrence_frequency TEXT DEFAULT 'NONE',
+        receipt_url TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS child_investments (
+        id TEXT PRIMARY KEY,
+        child_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        investment_name TEXT NOT NULL,
+        investment_type TEXT NOT NULL,
+        invested_amount REAL NOT NULL,
+        current_valuation REAL NOT NULL,
+        expected_return_rate REAL DEFAULT 8.2,
+        monthly_contribution REAL DEFAULT 0.0,
+        start_date TEXT,
+        maturity_date TEXT,
+        account_number_or_folio TEXT,
+        linked_goal_id TEXT,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'ACTIVE',
+        created_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS child_future_goals (
+        id TEXT PRIMARY KEY,
+        child_id TEXT NOT NULL,
+        user_id TEXT NOT NULL,
+        goal_title TEXT NOT NULL,
+        target_amount_today REAL NOT NULL,
+        estimated_inflation_rate REAL DEFAULT 8.0,
+        target_year INTEGER NOT NULL,
+        notes TEXT,
         created_at TEXT NOT NULL
       )
     ''');
@@ -743,5 +890,304 @@ class DatabaseHelper {
       }
     });
   }
+
+  // --- Child Profiles ---
+  Future<int> insertChildProfile(ChildProfileModel profile) async {
+    final db = await database;
+    return await db.insert('child_profiles', profile.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<ChildProfileModel>> getChildProfiles(String userId) async {
+    final db = await database;
+    final res = await db.query('child_profiles', where: 'user_id = ?', whereArgs: [userId], orderBy: 'created_at DESC');
+    return res.map((e) => ChildProfileModel.fromMap(e)).toList();
+  }
+
+  Future<int> updateChildProfile(ChildProfileModel profile) async {
+    final db = await database;
+    return await db.update('child_profiles', profile.toMap(), where: 'id = ?', whereArgs: [profile.id]);
+  }
+
+  Future<int> deleteChildProfile(String id) async {
+    final db = await database;
+    await db.delete('child_expenses', where: 'child_id = ?', whereArgs: [id]);
+    await db.delete('child_investments', where: 'child_id = ?', whereArgs: [id]);
+    await db.delete('child_future_goals', where: 'child_id = ?', whereArgs: [id]);
+    return await db.delete('child_profiles', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceChildProfiles(String userId, List<ChildProfileModel> remoteProfiles) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('child_profiles', where: 'user_id = ?', whereArgs: [userId]);
+      for (final p in remoteProfiles) {
+        await txn.insert('child_profiles', p.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  // --- Child Expenses ---
+  Future<int> insertChildExpense(ChildExpenseModel expense) async {
+    final db = await database;
+    return await db.insert('child_expenses', expense.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<ChildExpenseModel>> getChildExpenses(String userId, {String? childId}) async {
+    final db = await database;
+    List<Map<String, dynamic>> res;
+    if (childId != null && childId.isNotEmpty) {
+      res = await db.query('child_expenses', where: 'user_id = ? AND child_id = ?', whereArgs: [userId, childId], orderBy: 'expense_date DESC');
+    } else {
+      res = await db.query('child_expenses', where: 'user_id = ?', whereArgs: [userId], orderBy: 'expense_date DESC');
+    }
+    return res.map((e) => ChildExpenseModel.fromMap(e)).toList();
+  }
+
+  Future<int> updateChildExpense(ChildExpenseModel expense) async {
+    final db = await database;
+    return await db.update('child_expenses', expense.toMap(), where: 'id = ?', whereArgs: [expense.id]);
+  }
+
+  Future<int> deleteChildExpense(String id) async {
+    final db = await database;
+    return await db.delete('child_expenses', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceChildExpenses(String userId, List<ChildExpenseModel> remoteExpenses) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('child_expenses', where: 'user_id = ?', whereArgs: [userId]);
+      for (final e in remoteExpenses) {
+        await txn.insert('child_expenses', e.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  // --- Child Investments ---
+  Future<int> insertChildInvestment(ChildInvestmentModel investment) async {
+    final db = await database;
+    return await db.insert('child_investments', investment.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<ChildInvestmentModel>> getChildInvestments(String userId, {String? childId}) async {
+    final db = await database;
+    List<Map<String, dynamic>> res;
+    if (childId != null && childId.isNotEmpty) {
+      res = await db.query('child_investments', where: 'user_id = ? AND child_id = ?', whereArgs: [userId, childId], orderBy: 'created_at DESC');
+    } else {
+      res = await db.query('child_investments', where: 'user_id = ?', whereArgs: [userId], orderBy: 'created_at DESC');
+    }
+    return res.map((e) => ChildInvestmentModel.fromMap(e)).toList();
+  }
+
+  Future<int> updateChildInvestment(ChildInvestmentModel investment) async {
+    final db = await database;
+    return await db.update('child_investments', investment.toMap(), where: 'id = ?', whereArgs: [investment.id]);
+  }
+
+  Future<int> deleteChildInvestment(String id) async {
+    final db = await database;
+    return await db.delete('child_investments', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceChildInvestments(String userId, List<ChildInvestmentModel> remoteInvestments) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('child_investments', where: 'user_id = ?', whereArgs: [userId]);
+      for (final inv in remoteInvestments) {
+        await txn.insert('child_investments', inv.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  // --- Child Future Goals ---
+  Future<int> insertChildFutureGoal(ChildFutureGoalModel goal) async {
+    final db = await database;
+    return await db.insert('child_future_goals', goal.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<ChildFutureGoalModel>> getChildFutureGoals(String userId, {String? childId}) async {
+    final db = await database;
+    List<Map<String, dynamic>> res;
+    if (childId != null && childId.isNotEmpty) {
+      res = await db.query('child_future_goals', where: 'user_id = ? AND child_id = ?', whereArgs: [userId, childId], orderBy: 'target_year ASC');
+    } else {
+      res = await db.query('child_future_goals', where: 'user_id = ?', whereArgs: [userId], orderBy: 'target_year ASC');
+    }
+    return res.map((e) => ChildFutureGoalModel.fromMap(e)).toList();
+  }
+
+  Future<int> updateChildFutureGoal(ChildFutureGoalModel goal) async {
+    final db = await database;
+    return await db.update('child_future_goals', goal.toMap(), where: 'id = ?', whereArgs: [goal.id]);
+  }
+
+  Future<int> deleteChildFutureGoal(String id) async {
+    final db = await database;
+    return await db.delete('child_future_goals', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceChildFutureGoals(String userId, List<ChildFutureGoalModel> remoteGoals) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('child_future_goals', where: 'user_id = ?', whereArgs: [userId]);
+      for (final g in remoteGoals) {
+        await txn.insert('child_future_goals', g.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  // ===================== CREDIT CARDS =====================
+  Future<int> insertCreditCard(CreditCardModel card) async {
+    final db = await database;
+    return await db.insert('credit_cards', card.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<CreditCardModel>> getCreditCards(String userId) async {
+    final db = await database;
+    final res = await db.query('credit_cards', where: 'user_id = ?', whereArgs: [userId], orderBy: 'created_at DESC');
+    return res.map((e) => CreditCardModel.fromMap(e)).toList();
+  }
+
+  Future<CreditCardModel?> getCreditCardById(String id) async {
+    final db = await database;
+    final res = await db.query('credit_cards', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (res.isNotEmpty) {
+      return CreditCardModel.fromMap(res.first);
+    }
+    return null;
+  }
+
+  Future<int> updateCreditCard(CreditCardModel card) async {
+    final db = await database;
+    return await db.update('credit_cards', card.toMap(), where: 'id = ?', whereArgs: [card.id]);
+  }
+
+  Future<int> deleteCreditCard(String id) async {
+    final db = await database;
+    await db.delete('credit_card_transactions', where: 'card_id = ?', whereArgs: [id]);
+    return await db.delete('credit_cards', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceCreditCards(String userId, List<CreditCardModel> remoteCards) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('credit_cards', where: 'user_id = ?', whereArgs: [userId]);
+      for (final card in remoteCards) {
+        await txn.insert('credit_cards', card.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  // ===================== CREDIT CARD TRANSACTIONS =====================
+  Future<int> insertCreditCardTransaction(CreditCardTransactionModel tx) async {
+    final db = await database;
+    final res = await db.insert('credit_card_transactions', tx.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+
+    // Update the parent card's outstanding & available balance in SQLite
+    final cardRes = await db.query('credit_cards', where: 'id = ?', whereArgs: [tx.cardId], limit: 1);
+    if (cardRes.isNotEmpty) {
+      final card = CreditCardModel.fromMap(cardRes.first);
+      double newOutstanding = card.currentOutstanding;
+      if (tx.transactionType == 'PAYMENT' || tx.transactionType == 'REFUND') {
+        newOutstanding = (newOutstanding - tx.amount).clamp(0.0, double.infinity);
+      } else {
+        newOutstanding = newOutstanding + tx.amount;
+      }
+      double newAvailable = (card.totalLimit - newOutstanding).clamp(0.0, double.infinity);
+      final updatedCard = card.copyWith(
+        currentOutstanding: newOutstanding,
+        availableLimit: newAvailable,
+      );
+      await db.update('credit_cards', updatedCard.toMap(), where: 'id = ?', whereArgs: [card.id]);
+    }
+
+    return res;
+  }
+
+  Future<List<CreditCardTransactionModel>> getCreditCardTransactions(String userId, {String? cardId}) async {
+    final db = await database;
+    List<Map<String, dynamic>> res;
+    if (cardId != null && cardId.isNotEmpty) {
+      res = await db.query('credit_card_transactions', where: 'user_id = ? AND card_id = ?', whereArgs: [userId, cardId], orderBy: 'transaction_date DESC');
+    } else {
+      res = await db.query('credit_card_transactions', where: 'user_id = ?', whereArgs: [userId], orderBy: 'transaction_date DESC');
+    }
+    return res.map((e) => CreditCardTransactionModel.fromMap(e)).toList();
+  }
+
+  Future<int> deleteCreditCardTransaction(String id) async {
+    final db = await database;
+    return await db.delete('credit_card_transactions', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceCreditCardTransactions(String userId, List<CreditCardTransactionModel> remoteTxs) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('credit_card_transactions', where: 'user_id = ?', whereArgs: [userId]);
+      for (final tx in remoteTxs) {
+        await txn.insert('credit_card_transactions', tx.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
+
+  // ===================== HELPER COLUMN MIGRATION =====================
+  Future<void> _addColumnIfNotExists(Database db, String tableName, String columnName, String columnType) async {
+    try {
+      final info = await db.rawQuery('PRAGMA table_info($tableName)');
+      final exists = info.any((row) => (row['name'] as String?)?.toLowerCase() == columnName.toLowerCase());
+      if (!exists) {
+        await db.execute('ALTER TABLE $tableName ADD COLUMN $columnName $columnType');
+      }
+    } catch (_) {}
+  }
+
+  // ===================== PERSONAL SECRET VAULT =====================
+  Future<int> insertVaultItem(VaultItemModel item) async {
+    final db = await database;
+    return await db.insert('vault_items', item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+  }
+
+  Future<List<VaultItemModel>> getVaultItems(String userId, {String? itemType}) async {
+    final db = await database;
+    List<Map<String, dynamic>> res;
+    if (itemType != null && itemType.isNotEmpty && itemType.toUpperCase() != 'ALL') {
+      res = await db.query('vault_items', where: 'user_id = ? AND item_type = ?', whereArgs: [userId, itemType.toUpperCase()], orderBy: 'is_favorite DESC, created_at DESC');
+    } else {
+      res = await db.query('vault_items', where: 'user_id = ?', whereArgs: [userId], orderBy: 'is_favorite DESC, created_at DESC');
+    }
+    return res.map((e) => VaultItemModel.fromMap(e)).toList();
+  }
+
+  Future<VaultItemModel?> getVaultItemById(String id) async {
+    final db = await database;
+    final res = await db.query('vault_items', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (res.isNotEmpty) {
+      return VaultItemModel.fromMap(res.first);
+    }
+    return null;
+  }
+
+  Future<int> updateVaultItem(VaultItemModel item) async {
+    final db = await database;
+    return await db.update('vault_items', item.toMap(), where: 'id = ?', whereArgs: [item.id]);
+  }
+
+  Future<int> deleteVaultItem(String id) async {
+    final db = await database;
+    return await db.delete('vault_items', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> syncReplaceVaultItems(String userId, List<VaultItemModel> remoteItems) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      await txn.delete('vault_items', where: 'user_id = ?', whereArgs: [userId]);
+      for (final item in remoteItems) {
+        await txn.insert('vault_items', item.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+    });
+  }
 }
+
+
 

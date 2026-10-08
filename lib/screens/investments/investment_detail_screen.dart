@@ -293,7 +293,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 child: _returnTile(
                   title: 'Monthly Return',
                   amount: '+${CurrencyFormatter.format(inv.expectedMonthlyReturn)}',
-                  subtitle: 'Estimated per month',
+                  subtitle: '${inv.monthlyReturnRate.toStringAsFixed(2)}% per month',
                   icon: Icons.calendar_month_rounded,
                   color: const Color(0xFF10B981),
                   isDark: isDark,
@@ -304,7 +304,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                 child: _returnTile(
                   title: 'Yearly Return',
                   amount: '+${CurrencyFormatter.format(inv.expectedAnnualReturn)}',
-                  subtitle: 'Estimated per year',
+                  subtitle: '${inv.expectedReturnRate.toStringAsFixed(1)}% per year (p.a.)',
                   icon: Icons.calendar_today_rounded,
                   color: const Color(0xFF0EA5E9),
                   isDark: isDark,
@@ -320,7 +320,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
               Expanded(
                 child: _metricPill(
                   label: 'Expected Return Rate',
-                  value: '${inv.expectedReturnRate.toStringAsFixed(1)}% p.a.',
+                  value: '${inv.expectedReturnRate.toStringAsFixed(1)}% p.a. (${inv.monthlyReturnRate.toStringAsFixed(2)}%/mo)',
                   icon: Icons.percent_rounded,
                   color: const Color(0xFF6366F1),
                   isDark: isDark,

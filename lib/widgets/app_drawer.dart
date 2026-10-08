@@ -1,6 +1,10 @@
 import '../providers/income_provider.dart';
 import '../providers/gold_provider.dart';
+import '../providers/child_provider.dart';
+import '../providers/credit_card_provider.dart';
 import '../screens/gold/gold_portfolio_screen.dart';
+import '../screens/child/child_hub_screen.dart';
+import '../screens/credit_cards/credit_cards_hub_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -321,6 +325,38 @@ class AppDrawer extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(builder: (_) => const GoldPortfolioScreen()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.child_care_rounded,
+                    title: 'Kids Wealth & Care',
+                    subtitle: 'Child Expenses, SSY & Goals',
+                    badgeCount: context.watch<ChildProvider>().profiles.length,
+                    badgeColor: const Color(0xFF3B82F6),
+                    isSelected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ChildHubScreen()),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    context: context,
+                    icon: Icons.credit_card_rounded,
+                    title: 'Credit Cards & Bills',
+                    subtitle: 'Usages, Cycles & Reminders',
+                    badgeCount: context.watch<CreditCardProvider>().cards.length,
+                    badgeColor: const Color(0xFF6366F1),
+                    isSelected: false,
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const CreditCardsHubScreen()),
                       );
                     },
                   ),

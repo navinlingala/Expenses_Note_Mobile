@@ -28,6 +28,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
   String _selectedCategory = 'MUTUAL_FUNDS';
   String _investmentType = 'LUMPSUM'; // LUMPSUM, SIP
   String _riskLevel = 'MODERATE'; // LOW, MODERATE, HIGH, VERY_HIGH
+  String _ratePeriod = 'YEARLY'; // 'YEARLY' or 'MONTHLY'
   DateTime _startDate = DateTime.now();
   DateTime? _maturityDate;
   bool _isLoading = false;
@@ -75,9 +76,30 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
   }
 
   double get _parsedInvested => double.tryParse(_investedAmountController.text.trim()) ?? 0.0;
-  double get _parsedRate => double.tryParse(_expectedRateController.text.trim()) ?? 0.0;
-  double get _estAnnualReturn => _parsedInvested * (_parsedRate / 100.0);
+  double get _parsedEnteredRate => double.tryParse(_expectedRateController.text.trim()) ?? 0.0;
+  double get _normalizedAnnualRate =>
+      _ratePeriod == 'MONTHLY' ? _parsedEnteredRate * 12.0 : _parsedEnteredRate;
+  double get _normalizedMonthlyRate =>
+      _ratePeriod == 'MONTHLY' ? _parsedEnteredRate : (_parsedEnteredRate / 12.0);
+  double get _estAnnualReturn => _parsedInvested * (_normalizedAnnualRate / 100.0);
   double get _estMonthlyReturn => _estAnnualReturn / 12.0;
+
+  void _switchRatePeriod(String period) {
+    if (_ratePeriod == period) return;
+    final currentVal = double.tryParse(_expectedRateController.text.trim());
+    if (currentVal != null && currentVal > 0) {
+      if (period == 'MONTHLY') {
+        final monthly = currentVal / 12.0;
+        _expectedRateController.text =
+            monthly.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+      } else {
+        final yearly = currentVal * 12.0;
+        _expectedRateController.text =
+            yearly.toStringAsFixed(2).replaceAll(RegExp(r'\.?0+$'), '');
+      }
+    }
+    setState(() => _ratePeriod = period);
+  }
 
   Future<void> _pickStartDate() async {
     final picked = await showDatePicker(
@@ -112,7 +134,8 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
     final invested = double.parse(_investedAmountController.text.trim());
     final currentValText = _currentValueController.text.trim();
     final currentVal = currentValText.isNotEmpty ? double.parse(currentValText) : invested;
-    final rate = double.tryParse(_expectedRateController.text.trim()) ?? 0.0;
+    final enteredRate = double.tryParse(_expectedRateController.text.trim()) ?? 0.0;
+    final annualRate = _ratePeriod == 'MONTHLY' ? enteredRate * 12.0 : enteredRate;
     final sipText = _sipAmountController.text.trim();
     final sip = sipText.isNotEmpty ? double.tryParse(sipText) : null;
 
@@ -127,7 +150,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
         investmentType: _investmentType,
         investedAmount: invested,
         currentValue: currentVal,
-        expectedReturnRate: rate,
+        expectedReturnRate: annualRate,
         sipAmount: _investmentType == 'SIP' ? sip : null,
         startDate: _startDate,
         maturityDate: _maturityDate,
@@ -243,7 +266,7 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => setState(() => _investmentType = 'LUMPSUM'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
                       decoration: BoxDecoration(
                         color: _investmentType == 'LUMPSUM'
                             ? const Color(0xFF6366F1)
@@ -258,22 +281,25 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
                       alignment: Alignment.center,
                       child: Text(
                         'One-time / Lump sum',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           color: _investmentType == 'LUMPSUM' ? Colors.white : null,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: InkWell(
                     borderRadius: BorderRadius.circular(12),
                     onTap: () => setState(() => _investmentType = 'SIP'),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 6),
                       decoration: BoxDecoration(
                         color: _investmentType == 'SIP'
                             ? const Color(0xFF6366F1)
@@ -288,10 +314,13 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
                       alignment: Alignment.center,
                       child: Text(
                         'Recurring SIP',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           color: _investmentType == 'SIP' ? Colors.white : null,
                           fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ),
@@ -330,26 +359,26 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
                     controller: _investedAmountController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
-                      labelText: 'Total Invested (₹) *',
+                      labelText: 'Invested (₹) *',
                       hintText: '100000',
                       prefixIcon: Icon(Icons.account_balance_wallet_outlined),
                     ),
                     validator: (v) {
-                      if (v == null || v.trim().isEmpty) return 'Enter invested amount';
-                      if (double.tryParse(v) == null || double.parse(v) <= 0) return 'Enter valid amount';
+                      if (v == null || v.trim().isEmpty) return 'Enter amount';
+                      if (double.tryParse(v) == null || double.parse(v) <= 0) return 'Invalid';
                       return null;
                     },
                     onChanged: (_) => setState(() {}),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
                   child: TextFormField(
                     controller: _currentValueController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(
                       labelText: 'Current Value (₹)',
-                      hintText: 'Optional (Defaults to invested)',
+                      hintText: 'Optional',
                       prefixIcon: Icon(Icons.insights_rounded),
                     ),
                     onChanged: (_) => setState(() {}),
@@ -360,22 +389,146 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
 
             const SizedBox(height: 14),
 
-            // 5. Expected Return Rate (%)
-            TextFormField(
-              controller: _expectedRateController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Expected Annual Return Rate (% p.a.) *',
-                hintText: '12.0',
-                prefixIcon: Icon(Icons.percent_rounded),
-                helperText: 'Annualized expected rate used to project monthly & yearly returns',
+            // 5. Expected Return Rate (%) with Monthly / Yearly Mode Switcher
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+                ),
               ),
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'Enter return rate';
-                if (double.tryParse(v) == null) return 'Enter valid percentage';
-                return null;
-              },
-              onChanged: (_) => setState(() {}),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Flexible(
+                        child: Text(
+                          'Expected Return Rate *',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: (_ratePeriod == 'MONTHLY' ? const Color(0xFF10B981) : const Color(0xFF6366F1)).withAlpha(25),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _ratePeriod == 'MONTHLY' ? 'Monthly Rate' : 'Annual Rate',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: _ratePeriod == 'MONTHLY' ? const Color(0xFF10B981) : const Color(0xFF6366F1),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Full-width Responsive Rate Period Switcher
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _switchRatePeriod('YEARLY'),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _ratePeriod == 'YEARLY'
+                                    ? const Color(0xFF6366F1)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Yearly (% p.a.)',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: _ratePeriod == 'YEARLY' ? Colors.white : Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _switchRatePeriod('MONTHLY'),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: _ratePeriod == 'MONTHLY'
+                                    ? const Color(0xFF10B981)
+                                    : Colors.transparent,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                'Monthly (% / mo)',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: _ratePeriod == 'MONTHLY' ? Colors.white : Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextFormField(
+                    controller: _expectedRateController,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: _ratePeriod == 'MONTHLY'
+                          ? 'Monthly Rate (% / month)'
+                          : 'Annual Rate (% per year / p.a.)',
+                      hintText: _ratePeriod == 'MONTHLY' ? '1.0' : '12.0',
+                      prefixIcon: Icon(
+                        Icons.percent_rounded,
+                        color: _ratePeriod == 'MONTHLY' ? const Color(0xFF10B981) : const Color(0xFF6366F1),
+                      ),
+                      suffixText: _ratePeriod == 'MONTHLY' ? '% / mo' : '% p.a.',
+                      helperText: _ratePeriod == 'MONTHLY'
+                          ? '⚡ ${_parsedEnteredRate.toStringAsFixed(2)}% / mo = ${_normalizedAnnualRate.toStringAsFixed(2)}% / yr'
+                          : '⚡ ${_parsedEnteredRate.toStringAsFixed(2)}% p.a. = ${_normalizedMonthlyRate.toStringAsFixed(2)}% / mo',
+                      helperStyle: TextStyle(
+                        color: _ratePeriod == 'MONTHLY' ? const Color(0xFF10B981) : const Color(0xFF6366F1),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                    ),
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Enter return rate';
+                      if (double.tryParse(v) == null) return 'Enter valid percentage';
+                      return null;
+                    },
+                    onChanged: (_) => setState(() {}),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 14),
@@ -399,40 +552,108 @@ class _AddInvestmentScreenState extends State<AddInvestmentScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.auto_graph_rounded, size: 16, color: Color(0xFF10B981)),
-                        SizedBox(width: 6),
-                        Text(
-                          'Estimated Passive Returns Breakdown',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Monthly Passive Income', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                            Text(
-                              '+${CurrencyFormatter.format(_estMonthlyReturn)} / mo',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
-                            ),
-                          ],
+                        const Expanded(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.auto_graph_rounded, size: 16, color: Color(0xFF10B981)),
+                              SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'Estimated Returns',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        Container(height: 24, width: 1, color: Colors.grey.withAlpha(60)),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            const Text('Yearly Passive Income', style: TextStyle(fontSize: 11, color: Colors.grey)),
-                            Text(
-                              '+${CurrencyFormatter.format(_estAnnualReturn)} / yr',
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9)),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: (_ratePeriod == 'MONTHLY' ? const Color(0xFF10B981) : const Color(0xFF6366F1)).withAlpha(30),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            _ratePeriod == 'MONTHLY' ? 'Monthly Input' : 'Annual Input',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: _ratePeriod == 'MONTHLY' ? const Color(0xFF10B981) : const Color(0xFF6366F1),
                             ),
-                          ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Flexible(
+                                    child: Text(
+                                      'Monthly Return',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                                    ),
+                                  ),
+                                  if (_ratePeriod == 'MONTHLY')
+                                    const Text(' (Primary)', style: TextStyle(fontSize: 9, color: Color(0xFF10B981), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '+${CurrencyFormatter.format(_estMonthlyReturn)} / mo',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF10B981)),
+                              ),
+                              Text(
+                                'at ${_normalizedMonthlyRate.toStringAsFixed(2)}%/mo',
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(height: 36, width: 1, color: Colors.grey.withAlpha(60)),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  const Flexible(
+                                    child: Text(
+                                      'Yearly Return',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Colors.grey),
+                                    ),
+                                  ),
+                                  if (_ratePeriod == 'YEARLY')
+                                    const Text(' (Primary)', style: TextStyle(fontSize: 9, color: Color(0xFF0EA5E9), fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                '+${CurrencyFormatter.format(_estAnnualReturn)} / yr',
+                                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0EA5E9)),
+                              ),
+                              Text(
+                                'at ${_normalizedAnnualRate.toStringAsFixed(2)}% p.a.',
+                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),

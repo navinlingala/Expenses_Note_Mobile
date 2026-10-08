@@ -170,10 +170,18 @@ class _GoldPortfolioScreenState extends State<GoldPortfolioScreen> {
         ),
         elevation: 0,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_rounded, color: Color(0xFFEAB308)),
-            tooltip: 'Live Gold Rates',
-            onPressed: () => _showRateAdjustmentSheet(context, goldProvider, isDark),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E293B) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFEAB308).withAlpha(80)),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.tune_rounded, color: Color(0xFFEAB308), size: 20),
+              tooltip: 'Live Gold Rates',
+              onPressed: () => _showRateAdjustmentSheet(context, goldProvider, isDark),
+            ),
           ),
         ],
       ),

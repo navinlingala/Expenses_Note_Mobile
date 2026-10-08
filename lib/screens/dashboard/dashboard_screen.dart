@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/currency_formatter.dart';
 import '../../core/utils/date_utils.dart';
 import '../../providers/auth_provider.dart';
@@ -8,6 +9,9 @@ import '../../providers/transaction_provider.dart';
 import '../../providers/investment_provider.dart';
 import '../../providers/income_provider.dart';
 import '../../providers/gold_provider.dart';
+import '../../providers/child_provider.dart';
+import '../../providers/credit_card_provider.dart';
+import '../../providers/vault_provider.dart';
 import '../../widgets/whatsapp_button.dart';
 import 'cashflow_detail_screen.dart';
 import 'receivables_detail_screen.dart';
@@ -19,6 +23,12 @@ import '../people/add_due_screen.dart';
 import '../transactions/add_transaction_screen.dart';
 import '../investments/investment_list_screen.dart';
 import '../gold/gold_portfolio_screen.dart';
+import '../child/child_hub_screen.dart';
+import '../child/add_edit_child_expense_screen.dart';
+import '../credit_cards/credit_cards_hub_screen.dart';
+import '../credit_cards/add_edit_credit_card_screen.dart';
+import '../vault/vault_hub_screen.dart';
+import '../vault/add_edit_vault_item_screen.dart';
 import '../income/family_income_screen.dart';
 import '../calculators/calculators_screen.dart';
 import '../trash/trash_screen.dart';
@@ -34,6 +44,20 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animController;
   late Animation<double> _fadeAnim;
+
+  Future<void> _openWhatsAppSupport(BuildContext context) async {
+    const supportNumber = '919010067464';
+    final url = Uri.parse('https://wa.me/$supportNumber?text=${Uri.encodeComponent("Hello Expenses Note Support, I need assistance with the app.")}');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not open WhatsApp support.')),
+        );
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -60,6 +84,9 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final invProv = context.watch<InvestmentProvider>();
     final incProv = context.watch<IncomeProvider>();
     final goldProv = context.watch<GoldProvider>();
+    final childProv = context.watch<ChildProvider>();
+    final creditCardProv = context.watch<CreditCardProvider>();
+    final vaultProv = context.watch<VaultProvider>();
 
     final totalReceive = txProv.totalToReceive + invProv.totalExpectedMonthlyReturn;
     final totalPay = txProv.totalToPay + loanProv.totalMonthlyEmis;
@@ -95,77 +122,175 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
     final upcomingTxs = txProv.upcomingTransactions;
     final overdueTxs = txProv.overdueTransactions;
     final activeLoans = loanProv.activeLoans;
+    final user = context.watch<AuthProvider>().currentUser;
+
+    String getGreeting() {
+      final hour = DateTime.now().hour;
+      if (hour < 12) return 'Good morning';
+      if (hour < 17) return 'Good afternoon';
+      return 'Good evening';
+    }
+
+    final greeting = getGreeting();
+    final displayName = (user?.name != null && user!.name.trim().isNotEmpty)
+        ? user.name.trim().split(' ').first
+        : 'Finance Note';
+    final userInitial = (user?.name != null && user!.name.trim().isNotEmpty)
+        ? user.name.trim()[0].toUpperCase()
+        : 'U';
 
     return Scaffold(
       backgroundColor: isDark ? const Color(0xFF0B1120) : const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          tooltip: 'Open Side Menu',
-          icon: const Icon(Icons.menu_rounded),
-          onPressed: () {
-            if (widget.onOpenDrawer != null) {
-              widget.onOpenDrawer!();
-            } else {
-              Scaffold.of(context).openDrawer();
-            }
-          },
-        ),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withAlpha(30),
-                borderRadius: BorderRadius.circular(12),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(68),
+        child: Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF0B1120) : const Color(0xFFF8FAFC),
+            border: Border(
+              bottom: BorderSide(
+                color: isDark ? const Color(0xFF1E293B) : const Color(0xFFE2E8F0),
+                width: 1,
               ),
-              child: const Icon(Icons.account_balance_wallet_rounded, color: Color(0xFF6366F1), size: 18),
             ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Expenses Note', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 17)),
-                Text(
-                  AppDateUtils.formatMonthYear(DateTime.now().year, DateTime.now().month),
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white60 : Colors.black54,
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: Row(
+                children: [
+                  // 1. Premium User Avatar & Drawer Trigger
+                  InkWell(
+                    onTap: () {
+                      if (widget.onOpenDrawer != null) {
+                        widget.onOpenDrawer!();
+                      } else {
+                        Scaffold.of(context).openDrawer();
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.all(2.5),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFF06B6D4)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF6366F1).withAlpha(isDark ? 60 : 40),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF0F172A) : Colors.white,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircleAvatar(
+                              radius: 14,
+                              backgroundColor: const Color(0xFF6366F1),
+                              child: Text(
+                                userInitial,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.menu_rounded,
+                              size: 16,
+                              color: Color(0xFF6366F1),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(width: 12),
+
+                  // 2. Personalized Title & Greeting
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$greeting ✨',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white60 : Colors.black54,
+                            letterSpacing: 0.2,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          displayName,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.3,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // 3. Ultra-Premium Top Bar Actions (Alert Bell & Secret Vault)
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Alert Notification Bell
+                      _buildHeaderGlassButton(
+                        context: context,
+                        isDark: isDark,
+                        icon: Icons.notifications_none_rounded,
+                        tooltip: 'Overdue & Alerts',
+                        badgeCount: overdueTxs.length,
+                        badgeColor: const Color(0xFFF43F5E),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const OverduePaymentsScreen()),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Secure Personal Vault
+                      _buildHeaderGlassButton(
+                        context: context,
+                        isDark: isDark,
+                        icon: Icons.shield_outlined,
+                        tooltip: 'Personal Secret Vault',
+                        badgeCount: vaultProv.totalSecretsCount,
+                        badgeColor: const Color(0xFF6366F1),
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const VaultHubScreen()),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
-        actions: [
-          IconButton(
-            tooltip: 'Financial Calculators',
-            icon: const Icon(Icons.calculate_outlined),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CalculatorsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            tooltip: 'Trash Bin',
-            icon: Badge(
-              isLabelVisible: (loanProv.deletedLoans.length + txProv.deletedTransactions.length) > 0,
-              label: const Text(''),
-              child: const Icon(Icons.delete_outline_rounded),
-            ),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const TrashScreen()),
-              );
-            },
-          ),
-          const SizedBox(width: 4),
-        ],
       ),
       body: FadeTransition(
         opacity: _fadeAnim,
@@ -263,6 +388,21 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
               // 5.1 GOLD ASSETS & SGB WEALTH STRIP
               _buildGoldPortfolioStrip(context, isDark, goldProv),
 
+              const SizedBox(height: 12),
+
+              // 5.2 KIDS & CHILD FINANCE STRIP
+              _buildKidsFinanceStrip(context, isDark, childProv),
+
+              const SizedBox(height: 12),
+
+              // 5.3 CREDIT CARDS & BILL REMINDERS STRIP
+              _buildCreditCardsPortfolioStrip(context, isDark, creditCardProv),
+
+              const SizedBox(height: 12),
+
+              // 5.4 SECURE PERSONAL SECRET VAULT STRIP
+              _buildVaultPortfolioStrip(context, isDark, vaultProv),
+
               const SizedBox(height: 18),
 
               // 6. SECTION HEADER & UPCOMING SCHEDULE
@@ -300,6 +440,71 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                 ...activeLoans.take(2).map((loan) => _buildLoanTile(context, isDark, loan)),
 
               const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- HEADER GLASS ACTION BUTTON ---
+  Widget _buildHeaderGlassButton({
+    required BuildContext context,
+    required bool isDark,
+    required IconData icon,
+    required String tooltip,
+    required VoidCallback onTap,
+    int badgeCount = 0,
+    Color badgeColor = const Color(0xFFF43F5E),
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(isDark ? 35 : 12),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: isDark ? Colors.white70 : const Color(0xFF334155),
+              ),
+              if (badgeCount > 0)
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: Container(
+                    padding: const EdgeInsets.all(3.5),
+                    decoration: BoxDecoration(
+                      color: badgeColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                        width: 1.5,
+                      ),
+                    ),
+                    constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                  ),
+                ),
             ],
           ),
         ),
@@ -473,6 +678,24 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
             icon: Icons.receipt_long_rounded,
             color: const Color(0xFFF59E0B),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AddTransactionScreen())),
+          ),
+          const SizedBox(width: 8),
+          _actionPill(
+            context: context,
+            isDark: isDark,
+            label: '+ Child Exp',
+            icon: Icons.child_care_rounded,
+            color: const Color(0xFF3B82F6),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ChildHubScreen())),
+          ),
+          const SizedBox(width: 8),
+          _actionPill(
+            context: context,
+            isDark: isDark,
+            label: '+ Credit Card',
+            icon: Icons.credit_card_rounded,
+            color: const Color(0xFF6366F1),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const CreditCardsHubScreen())),
           ),
           const SizedBox(width: 8),
           _actionPill(
@@ -784,6 +1007,238 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                   ),
                 ),
               ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- 5.2 KIDS & CHILD FINANCE STRIP ---
+  Widget _buildKidsFinanceStrip(BuildContext context, bool isDark, ChildProvider childProv) {
+    final hasKids = childProv.profiles.isNotEmpty;
+    final totalInvested = childProv.totalCurrentValuation;
+    final monthlySpend = childProv.totalMonthlyChildExpenses;
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const ChildHubScreen()),
+      ),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF3B82F6).withAlpha(60)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3B82F6).withAlpha(25),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.child_care_rounded, color: Color(0xFF3B82F6), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Kids Wealth & Child Care', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasKids
+                        ? '${childProv.profiles.length} Kids • Spend: ${CurrencyFormatter.format(monthlySpend)}/mo • Wealth: ${CurrencyFormatter.format(totalInvested)}'
+                        : 'Track school fees, pediatric care, SSY & education funds',
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF3B82F6).withAlpha(20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                hasKids ? '${childProv.profiles.length} Kids' : 'Kids Hub',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF3B82F6),
+                ),
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- 5.3 CREDIT CARDS & BILL REMINDER STRIP ---
+  Widget _buildCreditCardsPortfolioStrip(BuildContext context, bool isDark, CreditCardProvider creditCardProv) {
+    final hasCards = creditCardProv.cards.isNotEmpty;
+    final totalOutstanding = creditCardProv.totalCurrentOutstanding;
+    final totalLimit = creditCardProv.totalCreditLimit;
+    final utilization = creditCardProv.overallUtilizationPercentage;
+    final health = creditCardProv.overallUtilizationHealth;
+    final healthColor = health == 'HEALTHY'
+        ? const Color(0xFF10B981)
+        : (health == 'MODERATE' ? const Color(0xFFF59E0B) : const Color(0xFFEF4444));
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const CreditCardsHubScreen()),
+      ),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF6366F1).withAlpha(60)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1).withAlpha(25),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.credit_card_rounded, color: Color(0xFF6366F1), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Credit Cards & Bill Cycles', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasCards
+                        ? '${creditCardProv.cards.length} Cards • Due: ${CurrencyFormatter.format(totalOutstanding)} / ${CurrencyFormatter.format(totalLimit)}'
+                        : 'Track card limits, statement dates & pay reminders',
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            if (hasCards)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: healthColor.withAlpha(25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${utilization.toStringAsFixed(0)}% Used',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: healthColor,
+                  ),
+                ),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF6366F1).withAlpha(20),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Text(
+                  'Cards Hub',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6366F1),
+                  ),
+                ),
+              ),
+            const SizedBox(width: 4),
+            const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // --- 5.4 SECURE PERSONAL SECRET VAULT STRIP ---
+  Widget _buildVaultPortfolioStrip(BuildContext context, bool isDark, VaultProvider vaultProv) {
+    final hasSecrets = vaultProv.totalSecretsCount > 0;
+    final totalSecrets = vaultProv.totalSecretsCount;
+    final isLocked = !vaultProv.isVaultUnlocked;
+
+    return InkWell(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const VaultHubScreen()),
+      ),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFF06B6D4).withAlpha(70)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF06B6D4).withAlpha(25),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(Icons.shield_rounded, color: Color(0xFF06B6D4), size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Text('Personal Secret Vault', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
+                      const SizedBox(width: 6),
+                      Icon(isLocked ? Icons.lock_rounded : Icons.lock_open_rounded, size: 13, color: isLocked ? Colors.orange : const Color(0xFF10B981)),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasSecrets
+                        ? '$totalSecrets Secret items stored • ${vaultProv.cardsCount} Cards, ${vaultProv.bankAccountsCount} Banks, ${vaultProv.passwordsCount} PINs'
+                        : 'Securely store Card CVVs, ATM PINs, Bank Accounts & Passwords',
+                    style: TextStyle(fontSize: 12, color: isDark ? Colors.white60 : Colors.black54),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF06B6D4).withAlpha(20),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                hasSecrets ? '$totalSecrets Items' : 'Open Vault',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF06B6D4),
+                ),
+              ),
+            ),
             const SizedBox(width: 4),
             const Icon(Icons.arrow_forward_ios_rounded, size: 12, color: Colors.grey),
           ],

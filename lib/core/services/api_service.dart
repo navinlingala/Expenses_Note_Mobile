@@ -434,5 +434,300 @@ class ApiService {
       return false;
     }
   }
+
+  // --- CHILD PROFILES CRUD ---
+  Future<List<Map<String, dynamic>>> fetchChildProfiles(String userId) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-profiles?userId=$userId');
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveChildProfile(Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-profiles');
+      final response = await http
+          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateChildProfile(String id, Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-profiles/$id');
+      final response = await http
+          .put(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteChildProfile(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-profiles/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // --- CHILD EXPENSES CRUD ---
+  Future<List<Map<String, dynamic>>> fetchChildExpenses(String userId, {String? childId}) async {
+    try {
+      var endpoint = '$baseUrl/child-expenses?userId=$userId';
+      if (childId != null && childId.isNotEmpty) {
+        endpoint += '&childId=$childId';
+      }
+      final response = await http.get(Uri.parse(endpoint)).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveChildExpense(Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-expenses');
+      final response = await http
+          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateChildExpense(String id, Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-expenses/$id');
+      final response = await http
+          .put(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteChildExpense(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-expenses/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // --- CHILD INVESTMENTS CRUD ---
+  Future<List<Map<String, dynamic>>> fetchChildInvestments(String userId, {String? childId}) async {
+    try {
+      var endpoint = '$baseUrl/child-investments?userId=$userId';
+      if (childId != null && childId.isNotEmpty) {
+        endpoint += '&childId=$childId';
+      }
+      final response = await http.get(Uri.parse(endpoint)).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveChildInvestment(Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-investments');
+      final response = await http
+          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateChildInvestment(String id, Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-investments/$id');
+      final response = await http
+          .put(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteChildInvestment(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-investments/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // --- CHILD FUTURE GOALS CRUD ---
+  Future<List<Map<String, dynamic>>> fetchChildFutureGoals(String userId, {String? childId}) async {
+    try {
+      var endpoint = '$baseUrl/child-goals?userId=$userId';
+      if (childId != null && childId.isNotEmpty) {
+        endpoint += '&childId=$childId';
+      }
+      final response = await http.get(Uri.parse(endpoint)).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveChildFutureGoal(Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-goals');
+      final response = await http
+          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateChildFutureGoal(String id, Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-goals/$id');
+      final response = await http
+          .put(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteChildFutureGoal(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/child-goals/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // --- CREDIT CARDS CRUD ---
+  Future<List<Map<String, dynamic>>> fetchCreditCards(String userId) async {
+    try {
+      final url = Uri.parse('$baseUrl/credit-cards?userId=$userId');
+      final response = await http.get(url).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveCreditCard(Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/credit-cards');
+      final response = await http
+          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> updateCreditCard(String id, Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/credit-cards/$id');
+      final response = await http
+          .put(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteCreditCard(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/credit-cards/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // --- CREDIT CARD TRANSACTIONS CRUD ---
+  Future<List<Map<String, dynamic>>> fetchCreditCardTransactions(String userId, {String? cardId}) async {
+    try {
+      var endpoint = '$baseUrl/credit-card-transactions?userId=$userId';
+      if (cardId != null && cardId.isNotEmpty) {
+        endpoint += '&cardId=$cardId';
+      }
+      final response = await http.get(Uri.parse(endpoint)).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final List<dynamic> list = jsonDecode(response.body);
+        return list.map((item) => item as Map<String, dynamic>).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<bool> saveCreditCardTransaction(Map<String, dynamic> map) async {
+    try {
+      final url = Uri.parse('$baseUrl/credit-card-transactions');
+      final response = await http
+          .post(url, headers: {'Content-Type': 'application/json'}, body: jsonEncode(map))
+          .timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 201;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<bool> deleteCreditCardTransaction(String id) async {
+    try {
+      final url = Uri.parse('$baseUrl/credit-card-transactions/$id');
+      final response = await http.delete(url).timeout(const Duration(seconds: 10));
+      return response.statusCode == 200 || response.statusCode == 204;
+    } catch (_) {
+      return false;
+    }
+  }
 }
+
 

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 
 enum Environment { dev, prod }
 
@@ -19,21 +19,21 @@ class AppConfig {
   // -------------------------------------------------------------
   // Backend Endpoints
   // -------------------------------------------------------------
-  /// Production Backend: Connected to your Local Host on Wi-Fi IP (192.168.55.107:8080)
-  /// Running in PROD profile against your Neon PostgreSQL Database!
-  /// When deployed on Render, you can switch this to 'https://expenses-note-backend.onrender.com'
-   static const String liveBackendUrl = 'http://192.168.55.107:8080';
+  /// Current Wi-Fi IP of this machine (updated from ipconfig)
+  static const String liveBackendUrl = 'http://192.168.55.105:8080';
   // static const String liveBackendUrl = 'https://expenses-note-backend.onrender.com';
+  
   /// Development / Localhost Endpoints (for Chrome web & Android emulator)
   static const String localWebUrl = 'http://localhost:8080';
   static const String localAndroidEmulatorUrl = 'http://10.0.2.2:8080';
 
   static String get backendBaseUrl {
-    if (isProduction) {
-      return liveBackendUrl;
-    }
+    // When running in web browser (Chrome), always connect to localhost:8080 directly
     if (kIsWeb) {
       return localWebUrl;
+    }
+    if (isProduction) {
+      return liveBackendUrl;
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
       return localAndroidEmulatorUrl;
